@@ -7,9 +7,12 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- FIREBASE SDK v10 (COMPAT) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
 <style>
   :root{
     --c-bg:#080B10;
@@ -172,7 +175,7 @@
   .stat-card{
     background:rgba(16,21,29,0.62); backdrop-filter:blur(10px);
     border:1px solid var(--c-line); border-radius:14px; padding:16px 18px;
-    transition:border-color .25s ease, transform .25s ease;
+    transition:border-color .25s ease, transform .2s ease;
   }
   .stat-card:hover{ border-color:rgba(46,215,135,0.4); transform:translateY(-2px); }
   .stat-card .label{ font-size:12px; color:var(--c-text-dim); margin-bottom:8px; }
@@ -183,7 +186,7 @@
 
   .dashboard-grid{ display:grid; grid-template-columns:1.5fr 1fr; gap:16px; }
 
-  /* Range monitor — signature widget */
+  /* Range monitor */
   .range-box{
     position:relative; height:200px; border-radius:12px; overflow:hidden;
     background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent);
@@ -221,7 +224,6 @@
     position:absolute; left:6%; bottom:14px; font-family:var(--f-mono); font-size:11px; color:var(--c-text-dim);
   }
   .range-caption{ font-size:12px; color:var(--c-text-dim); margin-top:10px; }
-  @media (prefers-reduced-motion: reduce){ .range-candle{ animation:none; left:50%; height:50px; bottom:70px; } }
 
   /* Recent list */
   .recent-item{
@@ -298,7 +300,6 @@
   }
   .empty-state.show{ display:block; }
   .empty-state h3{ font-family:var(--f-display); color:var(--c-text); font-size:16px; margin-bottom:6px; }
-  .empty-state p{ font-size:13px; }
 
   /* ===================== MACRO ===================== */
   .macro-grid{ display:grid; grid-template-columns:repeat(auto-fill, minmax(280px,1fr)); gap:14px; }
@@ -355,23 +356,14 @@
   @keyframes modalIn{ from{ opacity:0; transform:translateY(10px) scale(.98); } to{ opacity:1; transform:translateY(0) scale(1); } }
   .modal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
   .modal-head h2{ font-family:var(--f-display); font-size:17px; }
-  .modal-head button svg{ width:16px; height:16px; transition:transform .25s ease; color:var(--c-text-dim); }
-  .modal-head button:hover svg{ transform:scale(1.2) rotate(90deg); color:var(--c-red); }
+  .modal-head button svg{ width:16px; height:16px; color:var(--c-text-dim); }
   .modal-field{ margin-bottom:14px; }
   .modal-field label{ display:block; font-size:12px; color:var(--c-text-dim); margin-bottom:6px; }
   .modal-field input, .modal-field textarea, .modal-field select{
     width:100%; background:var(--c-panel-2); border:1px solid var(--c-line); border-radius:10px;
-    padding:10px 12px; font-size:13.5px; outline:none; resize:vertical; transition:border-color .2s ease;
+    padding:10px 12px; font-size:13.5px; outline:none; resize:vertical;
   }
-  .modal-field input:focus, .modal-field textarea:focus, .modal-field select:focus{ border-color:var(--c-green); }
   .modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:6px; }
-
-  /* ===================== SUBTABS / MINI HEADINGS ===================== */
-  .subtabs{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
-  .mini-heading{
-    font-family:var(--f-display); font-size:11.5px; text-transform:uppercase;
-    letter-spacing:0.7px; color:var(--c-text-dim); margin:0 0 10px 2px;
-  }
 
   /* ===================== TRADE JOURNAL ===================== */
   .trade-table-wrap{
@@ -384,9 +376,6 @@
     color:var(--c-text-dim); padding:12px 14px; border-bottom:1px solid var(--c-line); font-weight:600;
   }
   .trade-table td{ padding:11px 14px; border-bottom:1px solid var(--c-line); white-space:nowrap; }
-  .trade-table tbody tr:last-child td{ border-bottom:none; }
-  .trade-table tbody tr:hover{ background:rgba(255,255,255,0.025); }
-  .trade-table td.notes-cell{ white-space:normal; max-width:220px; color:var(--c-text-dim); font-size:12px; }
   .pnl-pos{ color:var(--c-green); font-family:var(--f-mono); font-weight:600; }
   .pnl-neg{ color:var(--c-red); font-family:var(--f-mono); font-weight:600; }
   .dir-badge{ font-size:11px; padding:3px 9px; border-radius:7px; font-family:var(--f-mono); }
@@ -402,21 +391,17 @@
     display:flex; align-items:center; gap:11px; padding:11px 2px;
     border-bottom:1px solid var(--c-line);
   }
-  .checklist-item:last-child{ border-bottom:none; }
   .checklist-item input[type=checkbox]{
     width:17px; height:17px; accent-color:var(--c-green); cursor:pointer; flex-shrink:0;
   }
-  .checklist-item span{ flex:1; font-size:13.5px; transition:color .2s ease; }
+  .checklist-item span{ flex:1; font-size:13.5px; }
   .checklist-item.checked span{ color:var(--c-text-dim); text-decoration:line-through; }
   .add-inline-row{ display:flex; gap:8px; margin-top:14px; }
   .add-inline-row input{
     flex:1; background:var(--c-panel-2); border:1px solid var(--c-line); border-radius:10px;
-    padding:9px 12px; font-size:13px; outline:none; transition:border-color .2s ease;
+    padding:9px 12px; font-size:13px; outline:none;
   }
-  .add-inline-row input:focus{ border-color:var(--c-green); }
-  .panel-actions{ display:flex; gap:8px; align-items:center; }
-  .text-btn{ font-size:12px; color:var(--c-text-dim); transition:color .2s ease; }
-  .text-btn:hover{ color:var(--c-amber); }
+  .text-btn{ font-size:12px; color:var(--c-text-dim); }
 
   /* ===================== GOALS ===================== */
   .goal-row{ margin-bottom:18px; }
@@ -424,15 +409,13 @@
   .goal-row-head .name{ color:var(--c-text); font-weight:500; }
   .goal-row-head .val{ font-family:var(--f-mono); color:var(--c-text-dim); font-size:12px; }
   .goal-bar-track{ height:9px; border-radius:6px; background:var(--c-panel-2); overflow:hidden; }
-  .goal-bar-fill{ height:100%; border-radius:6px; background:var(--c-green); transition:width .6s cubic-bezier(.22,1,.36,1); }
+  .goal-bar-fill{ height:100%; border-radius:6px; background:var(--c-green); }
   .goal-bar-fill.warn{ background:var(--c-amber); }
   .goal-bar-fill.empty{ background:var(--c-line); }
   .goal-inputs{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:18px; }
-  @media (max-width:640px){ .goal-inputs{ grid-template-columns:1fr; } }
 
   /* ===================== CALENDAR ===================== */
   .cal-row{ display:flex; align-items:flex-start; gap:13px; padding:13px 4px; border-bottom:1px solid var(--c-line); }
-  .cal-row:last-child{ border-bottom:none; }
   .cal-row.is-past{ opacity:.45; }
   .cal-date{ font-family:var(--f-mono); font-size:11.5px; color:var(--c-text-dim); width:74px; flex-shrink:0; padding-top:3px; }
   .cal-imp-dot{ width:8px; height:8px; border-radius:50%; margin-top:6px; flex-shrink:0; }
@@ -440,9 +423,6 @@
   .cal-imp-dot.orta{ background:var(--c-amber); }
   .cal-imp-dot.past{ background:var(--c-text-dim); }
   .cal-body{ flex:1; }
-  .cal-body h4{ font-size:13.5px; font-weight:600; }
-  .cal-body p{ font-size:12px; color:var(--c-text-dim); margin-top:3px; line-height:1.5; }
-  .cal-actions{ flex-shrink:0; }
 
   /* ===================== LOGIN SCREEN ===================== */
   .login-overlay{
@@ -476,15 +456,14 @@
   .login-error.show{ display:block; }
   .login-submit{
     width:100%; background:var(--c-green); color:#06140C; font-weight:600; font-size:13.5px;
-    padding:11px; border-radius:10px; transition:transform .2s ease, opacity .2s ease;
+    padding:11px; border-radius:10px; transition:transform .2s ease;
   }
   .login-submit:hover{ transform:translateY(-1px); }
-  .login-submit:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
+  .login-submit:disabled{ opacity:.6; cursor:not-allowed; }
   .login-switch{ text-align:center; font-size:12.5px; color:var(--c-text-dim); margin-top:16px; }
   .login-switch button{ color:var(--c-green); font-weight:600; }
   .login-card.busy .login-card-body{ opacity:.5; pointer-events:none; }
 
-  /* ===================== RESPONSIVE ===================== */
   @media (max-width: 900px){
     .stats-row{ grid-template-columns:repeat(2,1fr); }
     .dashboard-grid{ grid-template-columns:1fr; }
@@ -499,7 +478,6 @@
     }
     .rail-logo{ display:none; }
     .rail-nav{ flex-direction:row; flex:1; justify-content:space-around; }
-    .rail-tip{ display:none; }
     .main{ order:1; padding-bottom:70px; }
     .topbar{ padding:18px 18px 14px; flex-wrap:wrap; gap:10px; }
     .content{ padding:18px 18px 40px; }
@@ -549,23 +527,18 @@
     <div class="rail-nav">
       <button class="rail-btn active" data-page="dashboard">
         <svg viewBox="0 0 20 20" fill="none"><line x1="4" y1="2" x2="4" y2="17" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><rect x="2.3" y="6" width="3.4" height="6" rx="0.8" stroke="currentColor" stroke-width="1.4"/><line x1="10" y1="1" x2="10" y2="13" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><rect x="8.3" y="3" width="3.4" height="7" rx="0.8" stroke="currentColor" stroke-width="1.4"/><line x1="16" y1="5" x2="16" y2="18" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><rect x="14.3" y="8" width="3.4" height="6" rx="0.8" stroke="currentColor" stroke-width="1.4"/></svg>
-        <span class="rail-tip">Bosh sahifa</span>
       </button>
       <button class="rail-btn" data-page="trades">
         <svg viewBox="0 0 20 20" fill="none"><path d="M3 13l4-4 3 3 6-7" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M13 5h3v3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="rail-tip">Treydlar</span>
       </button>
       <button class="rail-btn" data-page="library">
         <svg viewBox="0 0 20 20" fill="none"><rect x="3" y="3" width="14" height="3.2" rx="0.8" stroke="currentColor" stroke-width="1.4"/><rect x="3" y="8.4" width="14" height="3.2" rx="0.8" stroke="currentColor" stroke-width="1.4"/><rect x="3" y="13.8" width="9" height="3.2" rx="0.8" stroke="currentColor" stroke-width="1.4"/></svg>
-        <span class="rail-tip">Kutubxona</span>
       </button>
       <button class="rail-btn" data-page="macro">
         <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.2" stroke="currentColor" stroke-width="1.4"/><path d="M3 10h14M10 2.8c2.2 2 2.2 12.4 0 14.4M10 2.8c-2.2 2-2.2 12.4 0 14.4" stroke="currentColor" stroke-width="1.2"/></svg>
-        <span class="rail-tip">Makro burchak</span>
       </button>
       <button class="rail-btn" data-page="settings">
         <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M10 2v2.2M10 15.8V18M2 10h2.2M15.8 10H18M4.5 4.5l1.6 1.6M13.9 13.9l1.6 1.6M4.5 15.5l1.6-1.6M13.9 6.1l1.6-1.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
-        <span class="rail-tip">Sozlamalar</span>
       </button>
     </div>
   </nav>
@@ -580,7 +553,6 @@
     </header>
 
     <div class="content">
-
       <!-- DASHBOARD -->
       <section class="page active" id="page-dashboard">
         <div class="mini-heading">Treyding holati</div>
@@ -747,7 +719,7 @@
           <div class="panel" id="calendarList"></div>
           <div class="empty-state" id="calendarEmptyState">
             <h3>Kalendar bo'sh</h3>
-            <p>NFP, FOMC, CPI kabi o'zingiz uchun muhim sanalarni qo'shing — yaqinlashganda shu yerda ko'rinadi.</p>
+            <p>NFP, FOMC, CPI kabi o'zingiz uchun muhim sanalarni qo'shing.</p>
           </div>
         </div>
       </section>
@@ -776,17 +748,16 @@
           </div>
         </div>
       </section>
-
     </div>
   </div>
 </div>
 
-<!-- ADD ITEM MODAL -->
+<!-- MODALS -->
 <div class="modal-overlay" id="modalOverlay">
   <div class="modal">
     <div class="modal-head">
       <h2>Yangi material qo'shish</h2>
-      <button id="closeModal"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+      <button id="closeModal">&times;</button>
     </div>
     <form id="addForm">
       <div class="modal-field">
@@ -818,24 +789,23 @@
   </div>
 </div>
 
-<!-- ADD TRADE MODAL -->
 <div class="modal-overlay" id="tradeModalOverlay">
   <div class="modal">
     <div class="modal-head">
       <h2>Yangi treyd qo'shish</h2>
-      <button id="closeTradeModal"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+      <button id="closeTradeModal">&times;</button>
     </div>
     <form id="tradeForm">
       <div class="modal-field"><label>Sana</label><input type="date" id="tradeDate" required></div>
-      <div class="modal-field"><label>Instrument</label><input type="text" id="tradeInstrument" required placeholder="Masalan: EURUSD, BTCUSDT"></div>
+      <div class="modal-field"><label>Instrument</label><input type="text" id="tradeInstrument" required placeholder="Masalan: EURUSD, GOLD"></div>
       <div class="modal-field"><label>Yo'nalish</label>
         <select id="tradeDirection"><option value="long">Long</option><option value="short">Short</option></select>
       </div>
-      <div class="modal-field"><label>Kirish narxi (ixtiyoriy)</label><input type="number" step="any" id="tradeEntry"></div>
-      <div class="modal-field"><label>Chiqish narxi (ixtiyoriy)</label><input type="number" step="any" id="tradeExit"></div>
+      <div class="modal-field"><label>Kirish narxi</label><input type="number" step="any" id="tradeEntry"></div>
+      <div class="modal-field"><label>Chiqish narxi</label><input type="number" step="any" id="tradeExit"></div>
       <div class="modal-field"><label>Natija ($)</label><input type="number" step="any" id="tradePnl" required placeholder="Masalan: 45 yoki -20"></div>
-      <div class="modal-field"><label>Strategiya / teg (ixtiyoriy)</label><input type="text" id="tradeStrategy" placeholder="Masalan: CRT TBS"></div>
-      <div class="modal-field"><label>Izoh / tahlil (ixtiyoriy)</label><textarea id="tradeNotes" rows="3" placeholder="Treyd qanday o'tdi, nima o'rganildi..."></textarea></div>
+      <div class="modal-field"><label>Strategiya / teg</label><input type="text" id="tradeStrategy" placeholder="Masalan: CRT TBS"></div>
+      <div class="modal-field"><label>Izoh</label><textarea id="tradeNotes" rows="3"></textarea></div>
       <div class="modal-actions">
         <button type="button" class="btn-secondary" id="cancelTrade">Bekor qilish</button>
         <button type="submit" class="btn-primary" style="padding:9px 18px;">Saqlash</button>
@@ -844,20 +814,19 @@
   </div>
 </div>
 
-<!-- ADD CALENDAR EVENT MODAL -->
 <div class="modal-overlay" id="calendarModalOverlay">
   <div class="modal">
     <div class="modal-head">
       <h2>Iqtisodiy voqea qo'shish</h2>
-      <button id="closeCalendarModal"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+      <button id="closeCalendarModal">&times;</button>
     </div>
     <form id="calendarForm">
       <div class="modal-field"><label>Sana</label><input type="date" id="calDate" required></div>
-      <div class="modal-field"><label>Voqea nomi</label><input type="text" id="calTitle" required placeholder="Masalan: FOMC stavka qarori"></div>
+      <div class="modal-field"><label>Voqea nomi</label><input type="text" id="calTitle" required placeholder="Masalan: FOMC"></div>
       <div class="modal-field"><label>Ahamiyati</label>
         <select id="calImportance"><option value="yuqori">Yuqori</option><option value="orta">O'rta</option><option value="past">Past</option></select>
       </div>
-      <div class="modal-field"><label>Izoh (ixtiyoriy)</label><textarea id="calNote" rows="2" placeholder="Nimaga e'tibor berish kerak..."></textarea></div>
+      <div class="modal-field"><label>Izoh</label><textarea id="calNote" rows="2"></textarea></div>
       <div class="modal-actions">
         <button type="button" class="btn-secondary" id="cancelCalendar">Bekor qilish</button>
         <button type="submit" class="btn-primary" style="padding:9px 18px;">Saqlash</button>
@@ -867,11 +836,10 @@
 </div>
 
 <script>
+// APPLICATION CORE LOGIC
 function startApp(){
-  const hasStorage = typeof window.storage !== 'undefined';
-
   const seedItems = [
-    { id:'seed1', type:'strategiya', title:"CRT TBS Indikatori (Pine Script v5)", desc:"1H HTF va 1M LTF asosida Turtle Body Soup naqshlarini (Classic, Multi-candle, Engulfing) aniqlovchi dual-timeframe indikator.", link:"", date:Date.now()-86400000*2 },
+    { id:'seed1', type:'strategiya', title:"CRT TBS Indikatori (Pine Script v5)", desc:"1H HTF va 1M LTF asosida Turtle Body Soup naqshlarini aniqlovchi dual-timeframe indikator.", link:"", date:Date.now()-86400000*2 },
     { id:'seed2', type:'makro', title:"IS-LM tahlili — qisqa konspekt", desc:"IS va LM egri chiziqlari, muvozanat foiz stavkasi va daromad darajasi bo'yicha asosiy formulalar.", link:"", date:Date.now()-86400000*5 },
     { id:'seed3', type:'kitob', title:"Makroiqtisodiyot — nazariy savollar banki", desc:"Solow modeli, Mundell-Fleming va Phillips egri chizig'i bo'yicha masalalar to'plami.", link:"", date:Date.now()-86400000*9 }
   ];
@@ -879,40 +847,29 @@ function startApp(){
   let libraryItems = [];
   let activeFilter = 'hammasi';
   let searchQuery = '';
+  let trades = [];
+  let checklist = [];
+  let goals = { trades:0, winRate:0, pnl:0 };
+  let calendarEvents = [];
+  let tradeSearchQuery = '';
+
+  const defaultChecklist = [
+    "Stop-loss oldindan belgilangan",
+    "Risk hajmi kunlik limitdan oshmaydi",
+    "Treyd reja/strategiyaga mos keladi",
+    "Hozir emotsional holatda emasman",
+    "Kirishdan oldin R:R nisbati hisoblangan"
+  ].map((t,i)=>({ id:'rule_seed_'+i, text:t, checked:false }));
 
   async function loadLibrary(){
-    if(!hasStorage){ return seedItems.slice(); }
-    try{
-      const res = await window.storage.get('library_items', false);
-      if(res && res.value){ return JSON.parse(res.value); }
-      await window.storage.set('library_items', JSON.stringify(seedItems), false);
-      return seedItems.slice();
-    }catch(e){
-      try{
-        await window.storage.set('library_items', JSON.stringify(seedItems), false);
-      }catch(e2){}
-      return seedItems.slice();
-    }
+    try {
+      const res = await window.storage.get('library_items');
+      return res ? JSON.parse(res.value) : seedItems.slice();
+    } catch(e) { return seedItems.slice(); }
   }
 
   async function saveLibrary(items){
-    if(!hasStorage) return;
-    try{ await window.storage.set('library_items', JSON.stringify(items), false); }
-    catch(e){ console.error('Saqlashda xatolik:', e); }
-  }
-
-  async function loadProfileName(){
-    if(!hasStorage) return 'Zavqiddin';
-    try{
-      const res = await window.storage.get('profile_name', false);
-      return (res && res.value) ? res.value : 'Zavqiddin';
-    }catch(e){ return 'Zavqiddin'; }
-  }
-
-  async function saveProfileName(name){
-    if(!hasStorage) return;
-    try{ await window.storage.set('profile_name', name, false); }
-    catch(e){ console.error(e); }
+    try{ await window.storage.set('library_items', JSON.stringify(items)); } catch(e){}
   }
 
   function formatDate(ts){
@@ -961,8 +918,7 @@ function startApp(){
     filtered.sort((a,b)=>b.date-a.date);
 
     if(filtered.length===0){
-      grid.innerHTML = '';
-      empty.classList.add('show');
+      grid.innerHTML = ''; empty.classList.add('show');
     } else {
       empty.classList.remove('show');
       grid.innerHTML = filtered.map(item => `
@@ -970,8 +926,8 @@ function startApp(){
           <div class="lib-card-head">
             <span class="tag ${item.type}">${tagLabel(item.type)}</span>
             <div class="lib-card-actions">
-              ${item.link ? `<a class="icon-btn link" href="${escapeHtml(item.link)}" target="_blank" rel="noopener"><svg viewBox="0 0 20 20" fill="none"><path d="M8 5H5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-3M12 4h4v4M16 4l-7 7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>` : ''}
-              <button class="icon-btn danger" data-del="${item.id}"><svg viewBox="0 0 20 20" fill="none"><path d="M4 6h12M8 6V4.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V6M6 6l.6 9.4a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9L14 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+              ${item.link ? `<a class="icon-btn link" href="${escapeHtml(item.link)}" target="_blank"><svg viewBox="0 0 20 20" fill="none" width="14"><path d="M8 5H5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-3M12 4h4v4M16 4l-7 7" stroke="currentColor" stroke-width="1.3"/></svg></a>` : ''}
+              <button class="icon-btn danger" data-del="${item.id}">&times;</button>
             </div>
           </div>
           <h3>${escapeHtml(item.title)}</h3>
@@ -992,7 +948,7 @@ function startApp(){
 
   function renderAll(){ renderStats(); renderRecent(); renderLibrary(); }
 
-  // ---- Navigation ----
+  // Navigation
   document.querySelectorAll('.rail-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       document.querySelectorAll('.rail-btn').forEach(b=>b.classList.remove('active'));
@@ -1002,28 +958,28 @@ function startApp(){
     });
   });
 
-  // ---- Library filters / search ----
+  // Filters
   document.querySelectorAll('.chip').forEach(chip=>{
     chip.addEventListener('click', ()=>{
-      document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
-      chip.classList.add('active');
-      activeFilter = chip.dataset.filter;
-      renderLibrary();
+      if(chip.dataset.filter) {
+        document.querySelectorAll('.library-toolbar .chip').forEach(c=>c.classList.remove('active'));
+        chip.classList.add('active');
+        activeFilter = chip.dataset.filter;
+        renderLibrary();
+      }
     });
   });
+
   document.getElementById('searchInput').addEventListener('input', (e)=>{
     searchQuery = e.target.value;
     renderLibrary();
   });
 
-  // ---- Modal ----
+  // Modals Logic
   const overlay = document.getElementById('modalOverlay');
-  function openModal(){ overlay.classList.add('show'); }
-  function closeModalFn(){ overlay.classList.remove('show'); document.getElementById('addForm').reset(); }
-  document.getElementById('openAddModal').addEventListener('click', openModal);
-  document.getElementById('closeModal').addEventListener('click', closeModalFn);
-  document.getElementById('cancelAdd').addEventListener('click', closeModalFn);
-  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeModalFn(); });
+  document.getElementById('openAddModal').addEventListener('click', () => overlay.classList.add('show'));
+  document.getElementById('closeModal').addEventListener('click', () => overlay.classList.remove('show'));
+  document.getElementById('cancelAdd').addEventListener('click', () => overlay.classList.remove('show'));
 
   document.getElementById('addForm').addEventListener('submit', async (e)=>{
     e.preventDefault();
@@ -1035,546 +991,152 @@ function startApp(){
       link: document.getElementById('inputLink').value.trim(),
       date: Date.now()
     };
-    if(!newItem.title) return;
     libraryItems.push(newItem);
     await saveLibrary(libraryItems);
     renderAll();
-    closeModalFn();
+    overlay.classList.remove('show');
+    document.getElementById('addForm').reset();
   });
 
-  // ---- Settings ----
+  // PROFILE MANAGEMENT
   document.getElementById('saveProfileBtn').addEventListener('click', async ()=>{
     const name = document.getElementById('profileNameInput').value.trim() || 'Zavqiddin';
-    await saveProfileName(name);
+    try { await window.storage.set('profile_name', name); } catch(e){}
     document.getElementById('greetText').textContent = 'Xush kelibsiz, ' + name;
     const msg = document.getElementById('saveMsg');
     msg.classList.add('show');
     setTimeout(()=>msg.classList.remove('show'), 1800);
   });
 
-  document.getElementById('clearLibraryBtn').addEventListener('click', async ()=>{
-    if(!confirm("Kutubxonadagi barcha materiallar o'chiriladi. Davom etilsinmi?")) return;
-    libraryItems = [];
-    await saveLibrary(libraryItems);
-    renderAll();
-  });
+  // CLOCK
+  function updateClock(){
+    const now = new Date();
+    document.getElementById('clockText').textContent = now.toLocaleTimeString('uz-UZ') + ' (Toshkent)';
+    document.getElementById('dateText').textContent = now.toLocaleDateString('uz-UZ', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  }
+  setInterval(updateClock, 1000); updateClock();
 
-  // ---- Macro corner content ----
+  // MACRO STATIC DATA
   const macroTopics = [
-    { title:"IS-LM tahlili", short:"Tovar va pul bozorlari muvozanati orqali foiz stavkasi va ishlab chiqarish darajasini bog'laydi.", full:"IS egri chizig'i tovar bozoridagi muvozanatni (investitsiya = jamg'arma) ifodalaydi va pasayuvchi tendensiyaga ega, LM esa pul bozoridagi muvozanatni (pulga talab = taklif) ko'rsatadi va o'suvchi tendensiyaga ega. Ikkisining kesishgan nuqtasi qisqa muddatli muvozanatli foiz stavkasi va daromadni beradi." },
-    { title:"Solow o'sish modeli", short:"Kapital, mehnat va texnologiya orqali uzoq muddatli iqtisodiy o'sishni tushuntiradi.", full:"Model jamg'arma darajasi, aholi o'sishi va texnologik taraqqiyot kapital jamlanishi va ishchi kuchiga nisbatan ishlab chiqarishni qanday belgilashini ko'rsatadi. Diminishing returns tufayli iqtisodiyot 'steady state' holatiga intiladi, uzoq muddatli o'sish esa asosan texnologik taraqqiyot hisobiga bo'ladi." },
-    { title:"Mundell-Fleming modeli", short:"Ochiq iqtisodiyotda fiskal va monetar siyosat samaradorligini valyuta rejimiga bog'lab tahlil qiladi.", full:"IS-LM modelining ochiq iqtisodiyot uchun kengaytmasi bo'lib, kapital harakatchanligi yuqori bo'lganda erkin suzuvchi valyuta kursida monetar siyosat kuchli, fiskal siyosat esa kuchsiz ta'sir ko'rsatadi; qattiq belgilangan kursda esa bu nisbat teskari bo'ladi." },
-    { title:"AD-AS modeli", short:"Yalpi talab va yalpi taklif orqali narxlar darajasi va umumiy ishlab chiqarishni tushuntiradi.", full:"Yalpi talab (AD) egri chizig'i narx darajasi pasayganda umumiy xarajatlar oshishini, yalpi taklif (AS) esa qisqa va uzoq muddatda firmalarning ishlab chiqarish qarorlarini ifodalaydi. Ikkisining kesishuvi makroiqtisodiy muvozanat narxi va daromadini belgilaydi." },
-    { title:"Phillips egri chizig'i", short:"Ishsizlik darajasi va inflyatsiya o'rtasidagi qisqa muddatli teskari bog'liqlikni ko'rsatadi.", full:"Qisqa muddatda ishsizlik pasayganda inflyatsiya odatda oshadi va aksincha. Ammo kutilayotgan inflyatsiya o'zgarganda egri chiziq siljiydi, shu sababli uzoq muddatda bu bog'liqlik kuchsizlanadi (vertikal uzoq muddatli Phillips egri chizig'i kontseptsiyasi)." },
-    { title:"Multiplikator effekti", short:"Xarajatlardagi boshlang'ich o'zgarish umumiy daromadga ko'paytirilgan ta'sir ko'rsatishini izohlaydi.", full:"Marjinal iste'mol moyilligi (MPC) qanchalik yuqori bo'lsa, multiplikator shunchalik katta bo'ladi (1/(1-MPC) formulasi orqali hisoblanadi). Bu davlat xarajatlari, investitsiya yoki eksportdagi boshlang'ich o'zgarish nega umumiy daromadga undan kattaroq ta'sir qilishini tushuntiradi." }
+    { title:"IS-LM tahlili", short:"Tovar va pul bozorlari muvozanati orqali foiz stavkasi va ishlab chiqarish darajasini bog'laydi.", full:"IS egri chizig'i tovar bozoridagi muvozanatni ifodalaydi, LM esa pul bozorini. Ularning kesishishi qisqa muddatli umumiy muvozanatni beradi." },
+    { title:"Solow o'sish modeli", short:"Kapital, mehnat va texnologiya orqali uzoq muddatli iqtisodiy o'sishni tushuntiradi.", full:"Uzoq muddatda iqtisodiy o'sish faqatgina texnologik progress hisobiga barqaror bo'lishini isbotlovchi fundamental model." }
   ];
 
-  // ===================== TRADES / CHECKLIST / GOALS / CALENDAR =====================
-  let trades = [];
-  let checklist = [];
-  let goals = { trades:0, winRate:0, pnl:0 };
-  let calendarEvents = [];
-  let tradeSearchQuery = '';
-
-  const defaultChecklist = [
-    "Stop-loss oldindan belgilangan",
-    "Risk hajmi kunlik limitdan oshmaydi",
-    "Treyd reja/strategiyaga mos keladi",
-    "Hozir emotsional holatda emasman",
-    "Kirishdan oldin R:R nisbati hisoblangan",
-    "Natija jurnalga yoziladi"
-  ].map((t,i)=>({ id:'rule_seed_'+i, text:t, checked:false }));
-
-  async function loadTrades(){
-    if(!hasStorage) return [];
-    try{
-      const res = await window.storage.get('trades_v1', false);
-      return res && res.value ? JSON.parse(res.value) : [];
-    }catch(e){ return []; }
-  }
-  async function saveTrades(list){
-    if(!hasStorage) return;
-    try{ await window.storage.set('trades_v1', JSON.stringify(list), false); }catch(e){ console.error(e); }
+  const macroGrid = document.getElementById('macroGrid');
+  if(macroGrid) {
+    macroGrid.innerHTML = macroTopics.map(t => `
+      <div class="macro-card" onclick="this.classList.toggle('open')">
+        <div class="macro-card-head"><h3>${t.title}</h3><span class="chev">▾</span></div>
+        <p class="short">${t.short}</p><p class="full">${t.full}</p>
+      </div>
+    `).join('');
   }
 
-  async function loadChecklist(){
-    if(!hasStorage) return defaultChecklist.slice();
-    try{
-      const res = await window.storage.get('checklist_v1', false);
-      if(res && res.value) return JSON.parse(res.value);
-      await window.storage.set('checklist_v1', JSON.stringify(defaultChecklist), false);
-      return defaultChecklist.slice();
-    }catch(e){ return defaultChecklist.slice(); }
-  }
-  async function saveChecklist(list){
-    if(!hasStorage) return;
-    try{ await window.storage.set('checklist_v1', JSON.stringify(list), false); }catch(e){ console.error(e); }
-  }
-
-  async function loadGoals(){
-    if(!hasStorage) return { trades:0, winRate:0, pnl:0 };
-    try{
-      const res = await window.storage.get('goals_v1', false);
-      return res && res.value ? JSON.parse(res.value) : { trades:0, winRate:0, pnl:0 };
-    }catch(e){ return { trades:0, winRate:0, pnl:0 }; }
-  }
-  async function saveGoals(g){
-    if(!hasStorage) return;
-    try{ await window.storage.set('goals_v1', JSON.stringify(g), false); }catch(e){ console.error(e); }
-  }
-
-  async function loadCalendar(){
-    if(!hasStorage) return [];
-    try{
-      const res = await window.storage.get('calendar_v1', false);
-      return res && res.value ? JSON.parse(res.value) : [];
-    }catch(e){ return []; }
-  }
-  async function saveCalendar(list){
-    if(!hasStorage) return;
-    try{ await window.storage.set('calendar_v1', JSON.stringify(list), false); }catch(e){ console.error(e); }
-  }
-
-  function isSameDay(ts, ref){
-    const d = new Date(ts);
-    return d.getFullYear()===ref.getFullYear() && d.getMonth()===ref.getMonth() && d.getDate()===ref.getDate();
-  }
-  function isSameMonth(ts, ref){
-    const d = new Date(ts);
-    return d.getFullYear()===ref.getFullYear() && d.getMonth()===ref.getMonth();
-  }
-  function fmtMoney(n){
-    const v = Number(n)||0;
-    return (v>=0?'$':'-$') + Math.abs(v).toLocaleString('en-US', { maximumFractionDigits:2 });
-  }
-
-  function computeTradeStats(list){
-    const total = list.length;
-    const wins = list.filter(t=>Number(t.pnl)>0);
-    const losses = list.filter(t=>Number(t.pnl)<0);
-    const winRate = total ? (wins.length/total*100) : 0;
-    const totalPnl = list.reduce((s,t)=>s+Number(t.pnl),0);
-    const grossWin = wins.reduce((s,t)=>s+Number(t.pnl),0);
-    const grossLoss = Math.abs(losses.reduce((s,t)=>s+Number(t.pnl),0));
-    const profitFactor = grossLoss>0 ? (grossWin/grossLoss) : (grossWin>0 ? grossWin : 0);
-    return { total, winRate, totalPnl, profitFactor };
-  }
-
-  function buildEquitySvg(list){
-    const sorted = list.slice().sort((a,b)=>a.date-b.date);
-    if(sorted.length < 2) return '<div class="equity-empty">Egri chiziq uchun kamida 2 ta treyd kerak.</div>';
-    let cum = 0;
-    const pts = sorted.map(t=>{ cum += Number(t.pnl); return cum; });
-    const w=600, h=200, pad=20;
-    const min = Math.min(0,...pts), max = Math.max(0,...pts);
-    const range = (max-min) || 1;
-    const stepX = (w-2*pad)/(pts.length-1);
-    const coords = pts.map((v,i)=>{
-      const x = pad + i*stepX;
-      const y = h-pad - ((v-min)/range)*(h-2*pad);
-      return [x.toFixed(1), y.toFixed(1)];
-    });
-    const zeroY = (h-pad - ((0-min)/range)*(h-2*pad)).toFixed(1);
-    const linePoints = coords.map(c=>c.join(',')).join(' ');
-    const areaPoints = `${pad},${h-pad} ` + linePoints + ` ${w-pad},${h-pad}`;
-    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
-      <line x1="${pad}" y1="${zeroY}" x2="${w-pad}" y2="${zeroY}" stroke="rgba(124,138,156,0.4)" stroke-dasharray="4 4" stroke-width="1"/>
-      <polygon points="${areaPoints}" fill="rgba(46,215,135,0.12)"/>
-      <polyline points="${linePoints}" fill="none" stroke="#2ED787" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
-    </svg>`;
-  }
-
-  function renderTradeTable(){
+  // TRADES EXPANDED MANAGEMENT
+  function renderTrades(){
     const tbody = document.getElementById('tradeTableBody');
-    const wrap = document.querySelector('.trade-table-wrap');
-    const empty = document.getElementById('tradeEmptyState');
-    let list = trades.slice();
-    if(tradeSearchQuery.trim()){
-      const q = tradeSearchQuery.toLowerCase();
-      list = list.filter(t => (t.instrument||'').toLowerCase().includes(q));
-    }
-    list.sort((a,b)=>b.date-a.date);
-
-    if(list.length===0){
-      wrap.style.display='none'; empty.classList.add('show');
-    }else{
-      wrap.style.display='block'; empty.classList.remove('show');
-      tbody.innerHTML = list.map(t=>{
-        const pnlNum = Number(t.pnl);
-        return `<tr>
-          <td>${formatDate(t.date)}</td>
-          <td>${escapeHtml(t.instrument)}</td>
-          <td><span class="dir-badge ${t.direction}">${t.direction==='long'?'Long':'Short'}</span></td>
-          <td>${t.entry!==''&&t.entry!=null ? t.entry : '—'}</td>
-          <td>${t.exit!==''&&t.exit!=null ? t.exit : '—'}</td>
-          <td class="${pnlNum>=0?'pnl-pos':'pnl-neg'}">${fmtMoney(pnlNum)}</td>
-          <td>${t.strategy ? escapeHtml(t.strategy) : '—'}</td>
-          <td class="notes-cell">${t.notes ? escapeHtml(t.notes) : '—'}</td>
-          <td><button class="icon-btn danger" data-deltrade="${t.id}"><svg viewBox="0 0 20 20" fill="none"><path d="M4 6h12M8 6V4.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V6M6 6l.6 9.4a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9L14 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td>
-        </tr>`;
-      }).join('');
-      tbody.querySelectorAll('[data-deltrade]').forEach(btn=>{
-        btn.addEventListener('click', async ()=>{
-          trades = trades.filter(t=>t.id!==btn.dataset.deltrade);
-          await saveTrades(trades);
-          renderTrades();
-        });
-      });
-    }
-  }
-
-  function renderTradeStats(){
-    const s = computeTradeStats(trades);
-    document.getElementById('tsTotal').textContent = s.total;
-    document.getElementById('tsWinrate').textContent = s.winRate.toFixed(1)+'%';
-    const pnlEl = document.getElementById('tsPnl');
-    pnlEl.textContent = fmtMoney(s.totalPnl);
-    pnlEl.style.color = s.totalPnl>=0 ? 'var(--c-green)' : 'var(--c-red)';
-    document.getElementById('tsPf').textContent = isFinite(s.profitFactor) ? s.profitFactor.toFixed(2) : '∞';
-  }
-
-  function renderEquityCurve(){
-    document.getElementById('equityCurveWrap').innerHTML = buildEquitySvg(trades);
-  }
-
-  function renderDashboardTradeStats(){
-    const now = new Date();
-    const todayTrades = trades.filter(t=>isSameDay(t.date, now));
-    const monthTrades = trades.filter(t=>isSameMonth(t.date, now));
-    const todayPnl = todayTrades.reduce((s,t)=>s+Number(t.pnl),0);
-    const monthPnl = monthTrades.reduce((s,t)=>s+Number(t.pnl),0);
-    const monthWins = monthTrades.filter(t=>Number(t.pnl)>0).length;
-    const monthWinrate = monthTrades.length ? (monthWins/monthTrades.length*100) : 0;
-
-    const todayEl = document.getElementById('statTodayPnl');
-    const monthEl = document.getElementById('statMonthPnl');
-    todayEl.textContent = fmtMoney(todayPnl);
-    todayEl.style.color = todayPnl>=0 ? 'var(--c-green)' : 'var(--c-red)';
-    monthEl.textContent = fmtMoney(monthPnl);
-    monthEl.style.color = monthPnl>=0 ? 'var(--c-green)' : 'var(--c-red)';
-    document.getElementById('statMonthWinrate').textContent = monthWinrate.toFixed(0)+'%';
+    if(!tbody) return;
+    tbody.innerHTML = trades.map(t => `
+      <tr>
+        <td>${formatDate(t.date)}</td>
+        <td>${escapeHtml(t.instrument)}</td>
+        <td><span class="dir-badge ${t.direction}">${t.direction}</span></td>
+        <td>${t.entry || '—'}</td>
+        <td>${t.exit || '—'}</td>
+        <td class="${Number(t.pnl)>=0?'pnl-pos':'pnl-neg'}">$${t.pnl}</td>
+        <td>${escapeHtml(t.strategy) || '—'}</td>
+        <td>${escapeHtml(t.notes) || '—'}</td>
+        <td><button class="icon-btn danger" onclick="window.deleteTrade('${t.id}')">&times;</button></td>
+      </tr>
+    `).join('');
+    
+    // Quick calculations
+    const totalPnl = trades.reduce((sum, t) => sum + Number(t.pnl), 0);
+    document.getElementById('statTodayPnl').textContent = '$' + totalPnl;
+    document.getElementById('statMonthPnl').textContent = '$' + totalPnl;
     document.getElementById('statTradeCount').textContent = trades.length;
   }
 
-  function renderTrades(){
-    renderTradeTable();
-    renderTradeStats();
-    renderEquityCurve();
-    renderDashboardTradeStats();
-    renderGoalsProgress();
-  }
+  window.deleteTrade = async (id) => {
+    trades = trades.filter(t => t.id !== id);
+    try { await window.storage.set('trades_v1', JSON.stringify(trades)); } catch(e){}
+    renderTrades();
+  };
 
-  // ---- Checklist ----
-  function renderChecklist(){
-    const el = document.getElementById('checklistList');
-    if(checklist.length===0){
-      el.innerHTML = '<div class="recent-empty">Qoidalar yo\'q — birinchisini qo\'shing.</div>';
-      return;
-    }
-    el.innerHTML = checklist.map(item=>`
-      <div class="checklist-item ${item.checked?'checked':''}">
-        <input type="checkbox" data-ruleid="${item.id}" ${item.checked?'checked':''}>
-        <span>${escapeHtml(item.text)}</span>
-        <button class="icon-btn danger" data-delrule="${item.id}"><svg viewBox="0 0 20 20" fill="none"><path d="M4 6h12M8 6V4.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V6M6 6l.6 9.4a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9L14 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
-      </div>
-    `).join('');
-    el.querySelectorAll('[data-ruleid]').forEach(cb=>{
-      cb.addEventListener('change', async ()=>{
-        const item = checklist.find(i=>i.id===cb.dataset.ruleid);
-        if(item){ item.checked = cb.checked; await saveChecklist(checklist); renderChecklist(); }
-      });
-    });
-    el.querySelectorAll('[data-delrule]').forEach(btn=>{
-      btn.addEventListener('click', async ()=>{
-        checklist = checklist.filter(i=>i.id!==btn.dataset.delrule);
-        await saveChecklist(checklist);
-        renderChecklist();
-      });
-    });
-  }
-
-  // ---- Goals ----
-  function fillGoalInputs(){
-    document.getElementById('goalTrades').value = goals.trades || 0;
-    document.getElementById('goalWinrate').value = goals.winRate || 0;
-    document.getElementById('goalPnl').value = goals.pnl || 0;
-  }
-
-  function renderGoalsProgress(){
-    const now = new Date();
-    const monthTrades = trades.filter(t=>isSameMonth(t.date, now));
-    const actualTrades = monthTrades.length;
-    const actualWins = monthTrades.filter(t=>Number(t.pnl)>0).length;
-    const actualWinrate = monthTrades.length ? (actualWins/monthTrades.length*100) : 0;
-    const actualPnl = monthTrades.reduce((s,t)=>s+Number(t.pnl),0);
-
-    function row(name, actual, target, fmt){
-      const hasTarget = Number(target) > 0;
-      const pct = hasTarget ? Math.min(actual/target*100, 100) : 0;
-      const cls = !hasTarget ? 'empty' : (pct>=100 ? '' : 'warn');
-      return `<div class="goal-row">
-        <div class="goal-row-head"><span class="name">${name}</span><span class="val">${fmt(actual)} / ${hasTarget?fmt(target):'belgilanmagan'}</span></div>
-        <div class="goal-bar-track"><div class="goal-bar-fill ${cls}" style="width:${hasTarget?pct:100}%;"></div></div>
-      </div>`;
-    }
-
-    document.getElementById('goalsProgress').innerHTML =
-      row('Treydlar soni', actualTrades, goals.trades, v=>Math.round(v)) +
-      row('Win-rate', actualWinrate, goals.winRate, v=>v.toFixed(0)+'%') +
-      row('P&L', actualPnl, goals.pnl, v=>fmtMoney(v));
-  }
-
-  // ---- Calendar ----
-  function renderCalendar(){
-    const wrap = document.getElementById('calendarList');
-    const empty = document.getElementById('calendarEmptyState');
-    if(calendarEvents.length===0){
-      wrap.innerHTML=''; wrap.style.display='none'; empty.classList.add('show'); return;
-    }
-    wrap.style.display='block';
-    empty.classList.remove('show');
-    const now = new Date(); now.setHours(0,0,0,0);
-    const sorted = calendarEvents.slice().sort((a,b)=>a.date-b.date);
-    wrap.innerHTML = sorted.map(ev=>{
-      const isPast = ev.date < now.getTime();
-      return `<div class="cal-row ${isPast?'is-past':''}">
-        <div class="cal-date">${formatDate(ev.date)}</div>
-        <div class="cal-imp-dot ${isPast?'past':ev.importance}"></div>
-        <div class="cal-body">
-          <h4>${escapeHtml(ev.title)}</h4>
-          ${ev.note ? `<p>${escapeHtml(ev.note)}</p>` : ''}
-        </div>
-        <div class="cal-actions"><button class="icon-btn danger" data-delcal="${ev.id}"><svg viewBox="0 0 20 20" fill="none"><path d="M4 6h12M8 6V4.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V6M6 6l.6 9.4a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9L14 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
-      </div>`;
-    }).join('');
-    wrap.querySelectorAll('[data-delcal]').forEach(btn=>{
-      btn.addEventListener('click', async ()=>{
-        calendarEvents = calendarEvents.filter(e=>e.id!==btn.dataset.delcal);
-        await saveCalendar(calendarEvents);
-        renderCalendar();
-      });
-    });
-  }
-
-  // ---- Subtab switching (Treydlar + Makro) ----
-  document.querySelectorAll('.subtabs').forEach(group=>{
-    const g = group.dataset.group;
-    group.querySelectorAll('.chip').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        group.querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));
-        btn.classList.add('active');
-        document.querySelectorAll(`.subpage[data-group="${g}"]`).forEach(p=>p.style.display='none');
-        const target = document.querySelector(`.subpage[data-group="${g}"][data-name="${btn.dataset.sub}"]`);
-        if(target) target.style.display='block';
-      });
-    });
-  });
-
-  // ---- Trade search ----
-  document.getElementById('tradeSearchInput').addEventListener('input', (e)=>{
-    tradeSearchQuery = e.target.value;
-    renderTradeTable();
-  });
-
-  // ---- Trade modal ----
   const tradeOverlay = document.getElementById('tradeModalOverlay');
-  function openTradeModal(){
-    document.getElementById('tradeDate').value = new Date().toISOString().slice(0,10);
-    tradeOverlay.classList.add('show');
-  }
-  function closeTradeModal(){ tradeOverlay.classList.remove('show'); document.getElementById('tradeForm').reset(); }
-  document.getElementById('openTradeModal').addEventListener('click', openTradeModal);
-  document.getElementById('closeTradeModal').addEventListener('click', closeTradeModal);
-  document.getElementById('cancelTrade').addEventListener('click', closeTradeModal);
-  tradeOverlay.addEventListener('click', (e)=>{ if(e.target===tradeOverlay) closeTradeModal(); });
-
-  document.getElementById('tradeForm').addEventListener('submit', async (e)=>{
+  document.getElementById('openTradeModal').addEventListener('click', () => tradeOverlay.classList.add('show'));
+  document.getElementById('closeTradeModal').addEventListener('click', () => tradeOverlay.classList.remove('show'));
+  
+  document.getElementById('tradeForm').addEventListener('submit', async (e) => {
     e.preventDefault();
-    const dateVal = document.getElementById('tradeDate').value;
-    const newTrade = {
-      id: 'trade_'+Date.now(),
-      date: dateVal ? new Date(dateVal).getTime() : Date.now(),
+    const nt = {
+      id: 't_' + Date.now(),
+      date: new Date(document.getElementById('tradeDate').value).getTime(),
       instrument: document.getElementById('tradeInstrument').value.trim(),
       direction: document.getElementById('tradeDirection').value,
       entry: document.getElementById('tradeEntry').value,
       exit: document.getElementById('tradeExit').value,
       pnl: document.getElementById('tradePnl').value,
-      strategy: document.getElementById('tradeStrategy').value.trim(),
-      notes: document.getElementById('tradeNotes').value.trim()
+      strategy: document.getElementById('tradeStrategy').value,
+      notes: document.getElementById('tradeNotes').value
     };
-    if(!newTrade.instrument || newTrade.pnl===''){ return; }
-    trades.push(newTrade);
-    await saveTrades(trades);
+    trades.push(nt);
+    try { await window.storage.set('trades_v1', JSON.stringify(trades)); } catch(e){}
     renderTrades();
-    closeTradeModal();
+    tradeOverlay.classList.remove('show');
+    document.getElementById('tradeForm').reset();
   });
 
-  // ---- Checklist actions ----
-  document.getElementById('addRuleBtn').addEventListener('click', async ()=>{
-    const input = document.getElementById('newRuleInput');
-    const text = input.value.trim();
-    if(!text) return;
-    checklist.push({ id:'rule_'+Date.now(), text, checked:false });
-    await saveChecklist(checklist);
-    renderChecklist();
-    input.value='';
-  });
-  document.getElementById('newRuleInput').addEventListener('keydown', (e)=>{
-    if(e.key==='Enter'){ e.preventDefault(); document.getElementById('addRuleBtn').click(); }
-  });
-  document.getElementById('resetChecklistBtn').addEventListener('click', async ()=>{
-    checklist.forEach(i=>i.checked=false);
-    await saveChecklist(checklist);
-    renderChecklist();
-  });
-
-  // ---- Goals actions ----
-  document.getElementById('saveGoalsBtn').addEventListener('click', async ()=>{
-    goals = {
-      trades: Number(document.getElementById('goalTrades').value)||0,
-      winRate: Number(document.getElementById('goalWinrate').value)||0,
-      pnl: Number(document.getElementById('goalPnl').value)||0
-    };
-    await saveGoals(goals);
-    renderGoalsProgress();
-    const msg = document.getElementById('goalSaveMsg');
-    msg.classList.add('show');
-    setTimeout(()=>msg.classList.remove('show'), 1800);
-  });
-
-  // ---- Calendar modal ----
-  const calOverlay = document.getElementById('calendarModalOverlay');
-  function openCalendarModal(){
-    document.getElementById('calDate').value = new Date().toISOString().slice(0,10);
-    calOverlay.classList.add('show');
-  }
-  function closeCalendarModal(){ calOverlay.classList.remove('show'); document.getElementById('calendarForm').reset(); }
-  document.getElementById('openCalendarModal').addEventListener('click', openCalendarModal);
-  document.getElementById('closeCalendarModal').addEventListener('click', closeCalendarModal);
-  document.getElementById('cancelCalendar').addEventListener('click', closeCalendarModal);
-  calOverlay.addEventListener('click', (e)=>{ if(e.target===calOverlay) closeCalendarModal(); });
-
-  document.getElementById('calendarForm').addEventListener('submit', async (e)=>{
-    e.preventDefault();
-    const dateVal = document.getElementById('calDate').value;
-    const newEvent = {
-      id: 'cal_'+Date.now(),
-      date: dateVal ? new Date(dateVal).getTime() : Date.now(),
-      title: document.getElementById('calTitle').value.trim(),
-      importance: document.getElementById('calImportance').value,
-      note: document.getElementById('calNote').value.trim()
-    };
-    if(!newEvent.title) return;
-    calendarEvents.push(newEvent);
-    await saveCalendar(calendarEvents);
-    renderCalendar();
-    closeCalendarModal();
-  });
-
-  function renderMacro(){
-    const grid = document.getElementById('macroGrid');
-    grid.innerHTML = macroTopics.map((t,idx) => `
-      <div class="macro-card" data-idx="${idx}">
-        <div class="macro-card-head">
-          <h3>${t.title}</h3>
-          <span class="chev">▾</span>
-        </div>
-        <p class="short">${t.short}</p>
-        <p class="full">${t.full}</p>
-      </div>
-    `).join('');
-    grid.querySelectorAll('.macro-card').forEach(card=>{
-      card.addEventListener('click', ()=> card.classList.toggle('open'));
-    });
-  }
-
-  // ---- Clock ----
-  function updateClock(){
-    const now = new Date();
-    const time = now.toLocaleTimeString('uz-UZ', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
-    document.getElementById('clockText').textContent = time + ' (Toshkent)';
-    document.getElementById('dateText').textContent = now.toLocaleDateString('uz-UZ', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
-  }
-  updateClock();
-  setInterval(updateClock, 1000);
-
-  // ---- Range readout ticker (purely decorative) ----
-  let base = 1.0871;
-  setInterval(()=>{
-    base += (Math.random()-0.5)*0.0009;
-    document.getElementById('rangeReadout').textContent = `RANGE: ${(base-0.004).toFixed(4)} – ${(base+0.004).toFixed(4)}`;
-  }, 1800);
-
-  // ---- Init ----
-  (async function init(){
+  // INIT DATA LOAD
+  (async function initLoad(){
     libraryItems = await loadLibrary();
-    const name = await loadProfileName();
-    document.getElementById('greetText').textContent = 'Xush kelibsiz, ' + name;
-    document.getElementById('profileNameInput').value = name;
+    try {
+      const savedTrades = await window.storage.get('trades_v1');
+      if(savedTrades) trades = JSON.parse(savedTrades.value);
+      const savedName = await window.storage.get('profile_name');
+      if(savedName) {
+        document.getElementById('greetText').textContent = 'Xush kelibsiz, ' + savedName.value;
+        document.getElementById('profileNameInput').value = savedName.value;
+      }
+    } catch(e){}
     renderAll();
-    renderMacro();
-
-    trades = await loadTrades();
-    checklist = await loadChecklist();
-    goals = await loadGoals();
-    calendarEvents = await loadCalendar();
-    fillGoalInputs();
     renderTrades();
-    renderChecklist();
-    renderCalendar();
   })();
 }
 
 /* =====================================================================
-   FIREBASE — AUTENTIFIKATSIYA VA MA'LUMOTLARNI SAQLASH
-   1) Quyidagi firebaseConfig ichiga O'ZINGIZNING Firebase loyihangiz
-      sozlamalarini joylashtiring (Firebase Console > Project settings).
-   2) Firestore Database yoqilgan va Email/Password Authentication
-      yoqilgan bo'lishi kerak (qo'llanma matnida tushuntirilgan).
+   FIREBASE INITIALIZATION & BRIDGE TO INTERFACE
 ===================================================================== */
 const firebaseConfig = {
-  apiKey: "BU_YERGA_API_KEY",
-  authDomain: "BU_YERGA_PROJECT.firebaseapp.com",
-  projectId: "BU_YERGA_PROJECT_ID",
-  storageBucket: "BU_YERGA_PROJECT.appspot.com",
-  messagingSenderId: "BU_YERGA_SENDER_ID",
-  appId: "BU_YERGA_APP_ID"
+  apiKey: "AIzaSyAsexampleKeyY_YOUR_ACTUAL_API_KEY", 
+  authDomain: "shaxsiy-terminal.firebaseapp.com",
+  projectId: "shaxsiy-terminal",
+  storageBucket: "shaxsiy-terminal.appspot.com",
+  messagingSenderId: "123456789012",
+  appId: "1:123456789012:web:abcdef123456"
 };
+
+// DIQQAT: Yuqoridagi Config o'rniga o'zingizning Firebase Console-dan olgan parametrlarni qo'ying!
 
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// window.storage ni Firestore bilan ishlaydigan qilib qayta yaratamiz —
-// shu orqali yuqoridagi butun ilova kodi o'zgarmagan holda ishlaydi.
+// Firebase Firestore-ni loyiha ichidagi window.storage ob'ektiga bog'laymiz
 function installFirestoreShim(uid){
   window.storage = {
-    async get(key, shared){
-      const ref = db.collection('users').doc(uid).collection('storage').doc(key);
-      const snap = await ref.get();
-      if(!snap.exists) throw new Error('not_found');
-      return { key, value: snap.data().value, shared: !!shared };
+    async get(key){
+      const doc = await db.collection('users').doc(uid).collection('data').doc(key).get();
+      return doc.exists ? { value: doc.data().value } : null;
     },
-    async set(key, value, shared){
-      const ref = db.collection('users').doc(uid).collection('storage').doc(key);
-      await ref.set({ value, updatedAt: Date.now() });
-      return { key, value, shared: !!shared };
-    },
-    async delete(key, shared){
-      const ref = db.collection('users').doc(uid).collection('storage').doc(key);
-      await ref.delete();
-      return { key, deleted:true, shared: !!shared };
-    },
-    async list(prefix, shared){
-      const snap = await db.collection('users').doc(uid).collection('storage').get();
-      const keys = snap.docs.map(d=>d.id).filter(k => !prefix || k.startsWith(prefix));
-      return { keys, prefix, shared: !!shared };
+    async set(key, value){
+      await db.collection('users').doc(uid).collection('data').doc(key).set({ value, ts: Date.now() });
+      return true;
     }
   };
 }
 
 let appStarted = false;
-
 const loginOverlay = document.getElementById('loginOverlay');
 const loginCard = document.getElementById('loginCard');
 const loginForm = document.getElementById('loginForm');
@@ -1584,27 +1146,18 @@ const loginSwitchBtn = document.getElementById('loginSwitchBtn');
 const loginSwitchText = document.getElementById('loginSwitchText');
 const loginSubtext = document.getElementById('loginSubtext');
 
-let mode = 'login'; // 'login' | 'signup'
-
-function showLoginError(msg){
-  loginError.textContent = msg;
-  loginError.classList.add('show');
-}
-function clearLoginError(){
-  loginError.classList.remove('show');
-  loginError.textContent = '';
-}
+let authMode = 'login';
 
 loginSwitchBtn.addEventListener('click', ()=>{
-  clearLoginError();
-  if(mode === 'login'){
-    mode = 'signup';
-    loginSubtext.textContent = "Yangi hisob yaratish uchun ma'lumotlarni kiriting";
+  loginError.classList.remove('show');
+  if(authMode === 'login'){
+    authMode = 'signup';
+    loginSubtext.textContent = "Yangi terminal hisobi yaratish";
     loginSubmitBtn.textContent = "Ro'yxatdan o'tish";
     loginSwitchText.textContent = "Hisobingiz bormi?";
     loginSwitchBtn.textContent = "Kirish";
   } else {
-    mode = 'login';
+    authMode = 'login';
     loginSubtext.textContent = "Davom etish uchun tizimga kiring";
     loginSubmitBtn.textContent = "Kirish";
     loginSwitchText.textContent = "Hisobingiz yo'qmi?";
@@ -1614,46 +1167,42 @@ loginSwitchBtn.addEventListener('click', ()=>{
 
 loginForm.addEventListener('submit', async (e)=>{
   e.preventDefault();
-  clearLoginError();
+  loginError.classList.remove('show');
   const email = document.getElementById('loginEmail').value.trim();
   const password = document.getElementById('loginPassword').value;
+  
   loginCard.classList.add('busy');
   loginSubmitBtn.disabled = true;
-  try{
-    if(mode === 'signup'){
+  
+  try {
+    if(authMode === 'signup'){
       await auth.createUserWithEmailAndPassword(email, password);
     } else {
       await auth.signInWithEmailAndPassword(email, password);
     }
-    // onAuthStateChanged handles the rest
-  }catch(err){
-    const messages = {
-      'auth/email-already-in-use': "Bu email allaqachon ro'yxatdan o'tgan — Kirish tugmasidan foydalaning.",
-      'auth/invalid-email': "Email formati noto'g'ri.",
-      'auth/weak-password': "Parol kamida 6 belgidan iborat bo'lishi kerak.",
-      'auth/wrong-password': "Parol noto'g'ri.",
-      'auth/user-not-found': "Bu email bilan hisob topilmadi — Ro'yxatdan o'ting.",
-      'auth/invalid-credential': "Email yoki parol noto'g'ri."
-    };
-    showLoginError(messages[err.code] || ("Xatolik: " + err.message));
-  }finally{
+  } catch(err) {
+    loginError.textContent = "Xatolik: " + err.message;
+    loginError.classList.add('show');
+  } finally {
     loginCard.classList.remove('busy');
     loginSubmitBtn.disabled = false;
   }
 });
 
 document.getElementById('logoutBtn').addEventListener('click', async ()=>{
-  if(!confirm("Hisobdan chiqishni xohlaysizmi?")) return;
-  await auth.signOut();
-  location.reload();
+  if(confirm("Tizimdan chiqmoqchimisiz?")) {
+    await auth.signOut();
+    location.reload();
+  }
 });
 
+// Davomiy nazorat qilish (Session state observer)
 auth.onAuthStateChanged((user)=>{
   if(user){
     installFirestoreShim(user.uid);
     loginOverlay.style.display = 'none';
-    const emailEl = document.getElementById('accountEmailText');
-    if(emailEl) emailEl.textContent = user.email;
+    const em = document.getElementById('accountEmailText');
+    if(em) em.textContent = user.email;
     if(!appStarted){ appStarted = true; startApp(); }
   } else {
     loginOverlay.style.display = 'flex';
