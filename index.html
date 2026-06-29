@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
   :root{
@@ -331,6 +332,12 @@
     background:var(--c-panel-2); border:1px solid var(--c-line); transition:border-color .2s ease;
   }
   .btn-secondary:hover{ border-color:var(--c-amber); color:var(--c-amber); }
+  .btn-danger-outline{
+    align-self:flex-start; font-size:13px; padding:9px 16px; border-radius:10px;
+    background:transparent; border:1px solid rgba(255,84,112,0.4); color:var(--c-red);
+    transition:background .2s ease;
+  }
+  .btn-danger-outline:hover{ background:rgba(255,84,112,0.1); }
   .save-msg{ font-size:12.5px; color:var(--c-green); opacity:0; transition:opacity .3s ease; }
   .save-msg.show{ opacity:1; }
 
@@ -437,6 +444,46 @@
   .cal-body p{ font-size:12px; color:var(--c-text-dim); margin-top:3px; line-height:1.5; }
   .cal-actions{ flex-shrink:0; }
 
+  /* ===================== LOGIN SCREEN ===================== */
+  .login-overlay{
+    position:fixed; inset:0; z-index:100;
+    display:flex; align-items:center; justify-content:center;
+    background:var(--c-bg); padding:20px;
+  }
+  .login-card{
+    width:100%; max-width:380px; background:rgba(16,21,29,0.85);
+    backdrop-filter:blur(14px); border:1px solid var(--c-line); border-radius:18px;
+    padding:32px 28px; position:relative; z-index:1;
+  }
+  .login-logo{
+    width:48px; height:48px; border-radius:12px; margin:0 auto 18px;
+    display:flex; align-items:center; justify-content:center;
+    background:linear-gradient(160deg, rgba(46,215,135,0.18), rgba(79,214,224,0.10));
+    border:1px solid var(--c-line); font-family:var(--f-display); font-weight:700; color:var(--c-green);
+  }
+  .login-card h2{ font-family:var(--f-display); font-size:19px; text-align:center; margin-bottom:6px; }
+  .login-card .sub{ font-size:12.5px; color:var(--c-text-dim); text-align:center; margin-bottom:24px; }
+  .login-field{ margin-bottom:14px; }
+  .login-field label{ display:block; font-size:12px; color:var(--c-text-dim); margin-bottom:6px; }
+  .login-field input{
+    width:100%; background:var(--c-panel-2); border:1px solid var(--c-line); border-radius:10px;
+    padding:11px 13px; font-size:13.5px; outline:none; transition:border-color .2s ease;
+  }
+  .login-field input:focus{ border-color:var(--c-green); }
+  .login-error{
+    font-size:12.5px; color:var(--c-red); margin-bottom:12px; min-height:0; display:none;
+  }
+  .login-error.show{ display:block; }
+  .login-submit{
+    width:100%; background:var(--c-green); color:#06140C; font-weight:600; font-size:13.5px;
+    padding:11px; border-radius:10px; transition:transform .2s ease, opacity .2s ease;
+  }
+  .login-submit:hover{ transform:translateY(-1px); }
+  .login-submit:disabled{ opacity:.6; cursor:not-allowed; transform:none; }
+  .login-switch{ text-align:center; font-size:12.5px; color:var(--c-text-dim); margin-top:16px; }
+  .login-switch button{ color:var(--c-green); font-weight:600; }
+  .login-card.busy .login-card-body{ opacity:.5; pointer-events:none; }
+
   /* ===================== RESPONSIVE ===================== */
   @media (max-width: 900px){
     .stats-row{ grid-template-columns:repeat(2,1fr); }
@@ -461,6 +508,32 @@
 </style>
 </head>
 <body>
+
+<div class="login-overlay" id="loginOverlay">
+  <div class="login-card" id="loginCard">
+    <div class="login-card-body">
+      <div class="login-logo">ZQ</div>
+      <h2>Shaxsiy Terminal</h2>
+      <p class="sub" id="loginSubtext">Davom etish uchun tizimga kiring</p>
+      <div class="login-error" id="loginError"></div>
+      <form id="loginForm">
+        <div class="login-field">
+          <label>Email</label>
+          <input type="email" id="loginEmail" required autocomplete="email">
+        </div>
+        <div class="login-field">
+          <label>Parol</label>
+          <input type="password" id="loginPassword" required autocomplete="current-password" minlength="6">
+        </div>
+        <button type="submit" class="login-submit" id="loginSubmitBtn">Kirish</button>
+      </form>
+      <div class="login-switch">
+        <span id="loginSwitchText">Hisobingiz yo'qmi?</span>
+        <button type="button" id="loginSwitchBtn">Ro'yxatdan o'tish</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="bg-layer">
   <div class="bg-grid"></div>
@@ -487,121 +560,1105 @@
         <span class="rail-tip">Kutubxona</span>
       </button>
       <button class="rail-btn" data-page="macro">
-        <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.2" stroke="currentColor" stroke-width="1.4"/><path d="M3 10h14M10 2.8c2.2 2 2.2 12.4 0 14.4M10 2.8C7.8 4.8 7.8 15.2 10 17.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
-        <span class="rail-tip">Makro</span>
+        <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7.2" stroke="currentColor" stroke-width="1.4"/><path d="M3 10h14M10 2.8c2.2 2 2.2 12.4 0 14.4M10 2.8c-2.2 2-2.2 12.4 0 14.4" stroke="currentColor" stroke-width="1.2"/></svg>
+        <span class="rail-tip">Makro burchak</span>
       </button>
       <button class="rail-btn" data-page="settings">
-        <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="2.5" stroke="currentColor" stroke-width="1.5"/><path d="M10 1.5l.8 1.8c.2.4.6.7 1 .8l1.9.2c.7.1 1 .9.5 1.4l-1.4 1.3c-.3.3-.4.8-.3 1.2l.4 1.9c.1.7-.6 1.2-1.2.9l-1.7-.9c-.4-.2-.9-.2-1.3 0l-1.7.9c-.6.3-1.3-.2-1.2-.9l.4-1.9c.1-.4 0-.9-.3-1.2L3.8 5.7c-.5-.5-.2-1.3.5-1.4l1.9-.2c.4-.1.8-.4 1-.8l.8-1.8c.3-.7 1.2-.7 1.5 0z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+        <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="3" stroke="currentColor" stroke-width="1.4"/><path d="M10 2v2.2M10 15.8V18M2 10h2.2M15.8 10H18M4.5 4.5l1.6 1.6M13.9 13.9l1.6 1.6M4.5 15.5l1.6-1.6M13.9 6.1l1.6-1.6" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
         <span class="rail-tip">Sozlamalar</span>
       </button>
     </div>
   </nav>
 
-  <main class="main">
+  <div class="main">
     <header class="topbar">
       <div class="topbar-greet">
-        <h1 id="greetTitle">Shaxsiy Terminal</h1>
-        <p id="greetDate">Yuklanmoqda...</p>
+        <h1 id="greetText">Xush kelibsiz, Zavqiddin</h1>
+        <p id="dateText"></p>
       </div>
-      <div class="topbar-clock">
-        <span class="dot"></span>
-        <span id="clockText">00:00:00</span>
-      </div>
+      <div class="topbar-clock"><span class="dot"></span><span id="clockText">--:--:--</span></div>
     </header>
 
     <div class="content">
+
+      <!-- DASHBOARD -->
       <section class="page active" id="page-dashboard">
+        <div class="mini-heading">Treyding holati</div>
         <div class="stats-row">
-          <div class="stat-card"><div class="label">Jami Savdolar</div><div class="value teal" id="stJami">0</div></div>
-          <div class="stat-card"><div class="label">Win Rate</div><div class="value green" id="stWr">0%</div></div>
-          <div class="stat-card"><div class="label">Net PnL</div><div class="value" id="stPnl">$0.00</div></div>
-          <div class="stat-card"><div class="label">Kutubxona</div><div class="value amber" id="stLib">0</div></div>
+          <div class="stat-card"><div class="label">Bugungi natija</div><div class="value" id="statTodayPnl">$0</div></div>
+          <div class="stat-card"><div class="label">Shu oy P&amp;L</div><div class="value" id="statMonthPnl">$0</div></div>
+          <div class="stat-card"><div class="label">Shu oy win-rate</div><div class="value amber" id="statMonthWinrate">0%</div></div>
+          <div class="stat-card"><div class="label">Jami treydlar</div><div class="value teal" id="statTradeCount">0</div></div>
         </div>
+
+        <div class="mini-heading">Kutubxona</div>
+        <div class="stats-row">
+          <div class="stat-card"><div class="label">Jami materiallar</div><div class="value green" id="statTotal">0</div></div>
+          <div class="stat-card"><div class="label">Strategiyalar</div><div class="value amber" id="statStrategiya">0</div></div>
+          <div class="stat-card"><div class="label">Kitob / maqola</div><div class="value teal" id="statKitob">0</div></div>
+          <div class="stat-card"><div class="label">Makro konspektlar</div><div class="value" id="statMakro">0</div></div>
+        </div>
+
         <div class="dashboard-grid">
           <div class="panel">
-            <div class="panel-title">Range Monitor (Hozirgi Holat)</div>
+            <div class="panel-title">CRT diapazon monitori</div>
             <div class="range-box">
-              <div class="range-line top"></div><div class="range-tag top">Premium</div>
-              <div class="range-line bottom"></div><div class="range-tag bottom">Discount</div>
+              <div class="range-line top"></div>
+              <div class="range-tag top">RESISTANCE</div>
+              <div class="range-line bottom"></div>
+              <div class="range-tag bottom">SUPPORT</div>
               <div class="range-candle"></div>
-              <div class="range-readout">Equilibrium / Range High-Low Dinamikasi</div>
+              <div class="range-readout" id="rangeReadout">RANGE: 1.0832 – 1.0911</div>
             </div>
-            <div class="range-caption">Narx premium zonaga yaqinlashmoqda. Sells qidirish tavsiya etiladi.</div>
+            <p class="range-caption">Vizual namuna — diapazon siqilishi va breakout naqshini ko'rsatadi (CRT / TBS mantiqiga bag'ishlangan).</p>
           </div>
+
           <div class="panel">
-            <div class="panel-title">Oxirgi Qo'shilganlar</div>
-            <div id="dashRecentList"></div>
+            <div class="panel-title">So'nggi qo'shilganlar</div>
+            <div id="recentList"><div class="recent-empty">Yuklanmoqda...</div></div>
           </div>
         </div>
       </section>
 
+      <!-- TRADES -->
       <section class="page" id="page-trades">
-        <div class="subtabs">
-          <button class="chip active" id="btnTabJournal">Savdo Jurnali</button>
-          <button class="chip" id="btnTabChecklist">Pre-Trade Checklist</button>
-          <button class="chip" id="btnTabGoals">Haftalik Maqsadlar</button>
+        <div class="subtabs" data-group="trades">
+          <button class="chip active" data-sub="jurnal">Jurnal</button>
+          <button class="chip" data-sub="statistika">Statistika</button>
+          <button class="chip" data-sub="qoidalar">Qoidalar</button>
+          <button class="chip" data-sub="maqsadlar">Maqsadlar</button>
         </div>
-        <div id="subpage-journal">
-          <div class="stats-row" style="margin-bottom:14px;">
-            <div class="panel" style="grid-column: span 3;">
-              <div class="panel-title">Equity Curve (Balans O'sishi)</div>
-              <div class="equity-wrap" id="equityContainer"></div>
+
+        <div class="subpage" data-group="trades" data-name="jurnal">
+          <div class="library-toolbar">
+            <div class="search-wrap" style="max-width:260px;">
+              <svg viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.4"/><path d="M16 16l-3.2-3.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+              <input type="text" id="tradeSearchInput" placeholder="Instrument bo'yicha qidirish...">
             </div>
-            <div class="panel" style="display:flex; flex-direction:column; justify-content:center;">
-              <button class="btn-primary" id="btnNewTrade" style="width:100%; justify-content:center; padding:12px;">
-                <svg viewBox="0 0 20 20" fill="none" style="width:16px;height:16px;"><path d="M10 4v12M4 10h12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                Yangi Trade Qo'shish
-              </button>
-            </div>
+            <button class="btn-primary" id="openTradeModal" style="margin-left:auto;">
+              <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.5v7M6.5 10h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              Treyd qo'shish
+            </button>
+          </div>
+          <div class="trade-table-wrap">
+            <table class="trade-table">
+              <thead>
+                <tr><th>Sana</th><th>Instrument</th><th>Yo'nalish</th><th>Kirish</th><th>Chiqish</th><th>Natija</th><th>Strategiya</th><th>Izoh</th><th></th></tr>
+              </thead>
+              <tbody id="tradeTableBody"></tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="tradeEmptyState">
+            <h3>Hali treyd kiritilmagan</h3>
+            <p>Birinchi treydingizni qo'shing — natija, win-rate va equity egri chizig'i shu yerdan hisoblanadi.</p>
+          </div>
+        </div>
+
+        <div class="subpage" data-group="trades" data-name="statistika" style="display:none;">
+          <div class="stats-row" id="tradeStatsRow">
+            <div class="stat-card"><div class="label">Jami treydlar</div><div class="value teal" id="tsTotal">0</div></div>
+            <div class="stat-card"><div class="label">Win-rate</div><div class="value amber" id="tsWinrate">0%</div></div>
+            <div class="stat-card"><div class="label">Jami natija</div><div class="value" id="tsPnl">$0</div></div>
+            <div class="stat-card"><div class="label">Profit-faktor</div><div class="value green" id="tsPf">0</div></div>
           </div>
           <div class="panel">
-            <div class="panel-title">Barcha Savdolar</div>
-            <div class="trade-table-wrap">
-              <table class="trade-table">
-                <thead><tr><th>Sana</th><th>Para</th><th>Yonalish</th><th>R:R</th><th>PnL ($)</th><th>Holat</th><th>Eslatma</th><th>Aksiyalar</th></tr></thead>
-                <tbody id="tradeTableBody"></tbody>
-              </table>
+            <div class="panel-title">Equity egri chizig'i</div>
+            <div class="equity-wrap" id="equityCurveWrap"><div class="equity-empty">Egri chiziq uchun kamida 2 ta treyd kerak.</div></div>
+          </div>
+        </div>
+
+        <div class="subpage" data-group="trades" data-name="qoidalar" style="display:none;">
+          <div class="panel">
+            <div class="panel-title">
+              Treyding qoidalari / psixologiya
+              <div class="panel-actions"><button class="text-btn" id="resetChecklistBtn">Hammasini tozalash</button></div>
+            </div>
+            <div id="checklistList"></div>
+            <div class="add-inline-row">
+              <input type="text" id="newRuleInput" placeholder="Yangi qoida qo'shish...">
+              <button class="btn-secondary" id="addRuleBtn">Qo'shish</button>
             </div>
           </div>
         </div>
-        <div id="subpage-checklist" style="display:none;">
-          <div class="dashboard-grid">
-            <div class="panel">
-              <div class="panel-title">Kundalik Checklist qoidalari</div>
-              <div id="checklistContainer"></div>
-              <form class="add-inline-row" id="formAddCheck">
-                <input type="text" id="inputCheckText" placeholder="Yangi qoida matni..." required>
-                <button type="submit" class="btn-secondary" style="padding:9px 14px;">Qo'shish</button>
-              </form>
-            </div>
-            <div class="panel" style="background:rgba(46,215,135,0.03);">
-              <div class="panel-title" style="color:var(--c-green);">Psixologik Eslatma</div>
-              <p style="font-size:13.5px; line-height:1.6; color:var(--c-text-dim);">
-                Checklistdagi barcha shartlar bajarilmaguncha order ochilmaydi. FOMOga berilmang. Bozor har doim imkoniyat beradi. Kapitalni saqlash — birinchi vazifa.
-              </p>
-            </div>
-          </div>
-        </div>
-        <div id="subpage-goals" style="display:none;">
-          <div class="settings-panel panel" style="max-width:100%;">
-            <div class="panel-title">Haftalik Maqsadlar progressi</div>
+
+        <div class="subpage" data-group="trades" data-name="maqsadlar" style="display:none;">
+          <div class="panel">
+            <div class="panel-title">Oylik maqsadlarni belgilash</div>
             <div class="goal-inputs">
-              <div class="field"><label>Haftalik Maqsad ($ PnL)</label><input type="number" id="goalTargetPnl" value="500"></div>
-              <div class="field"><label>Maksimal Stop-Loss (Haftalik)</label><input type="number" id="goalMaxSl" value="200"></div>
-              <div class="field"><label>Maksimal Trade Soni</label><input type="number" id="goalMaxTrades" value="10"></div>
+              <div class="field"><label>Treydlar soni</label><input type="number" id="goalTrades" min="0"></div>
+              <div class="field"><label>Win-rate (%)</label><input type="number" id="goalWinrate" min="0" max="100"></div>
+              <div class="field"><label>P&amp;L ($)</label><input type="number" id="goalPnl" min="0"></div>
             </div>
-            <button class="btn-secondary" id="btnSaveGoalParams">Maqsadlarni Yangilash</button>
-            <div style="margin-top:20px;" id="goalsProgressContainer"></div>
+            <div style="display:flex; align-items:center; gap:14px; margin-bottom:22px;">
+              <button class="btn-secondary" id="saveGoalsBtn">Maqsadlarni saqlash</button>
+              <span class="save-msg" id="goalSaveMsg">Saqlandi ✓</span>
+            </div>
+            <div style="height:1px; background:var(--c-line); margin-bottom:20px;"></div>
+            <div class="panel-title">Shu oydagi rivojlanish</div>
+            <div id="goalsProgress"></div>
           </div>
         </div>
       </section>
 
+      <!-- LIBRARY -->
       <section class="page" id="page-library">
         <div class="library-toolbar">
-          <button class="chip active" data-cat="all">Barchasi</button>
-          <button class="chip" data-cat="strategiya">Strategiya</button>
-          <button class="chip" data-cat="kitob">Kitoblar</button>
-          <button class="chip" data-cat="boshqa">Boshqa</button>
+          <button class="chip active" data-filter="hammasi">Hammasi</button>
+          <button class="chip" data-filter="strategiya">Strategiya</button>
+          <button class="chip" data-filter="kitob">Kitob / maqola</button>
+          <button class="chip" data-filter="makro">Makro konspekt</button>
+          <button class="chip" data-filter="boshqa">Boshqa</button>
           <div class="search-wrap">
-            <svg viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="5" stroke="currentColor" stroke-width="1.5"/><path d="M13 13l4 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
-            <input type="text" id="libSearchInput" placeholder="K
+            <svg viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.4"/><path d="M16 16l-3.2-3.2" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+            <input type="text" id="searchInput" placeholder="Materiallarni qidirish...">
+          </div>
+          <button class="btn-primary" id="openAddModal">
+            <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.5v7M6.5 10h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            Material qo'shish
+          </button>
+        </div>
+
+        <div class="library-grid" id="libraryGrid"></div>
+        <div class="empty-state" id="emptyState">
+          <h3>Kutubxona bo'sh</h3>
+          <p>Birinchi strategiyangiz, kitobingiz yoki konspektingizni qo'shing — ular shu yerda saqlanadi.</p>
+        </div>
+      </section>
+
+      <!-- MACRO -->
+      <section class="page" id="page-macro">
+        <div class="subtabs" data-group="macro">
+          <button class="chip active" data-sub="nazariya">Nazariya</button>
+          <button class="chip" data-sub="kalendar">Iqtisodiy kalendar</button>
+        </div>
+
+        <div class="subpage" data-group="macro" data-name="nazariya">
+          <div class="macro-grid" id="macroGrid"></div>
+        </div>
+
+        <div class="subpage" data-group="macro" data-name="kalendar" style="display:none;">
+          <div class="library-toolbar">
+            <p style="font-size:12.5px; color:var(--c-text-dim); margin-right:auto;">Muhim iqtisodiy sanalarni o'zingiz qo'shib, kuzatib boring.</p>
+            <button class="btn-primary" id="openCalendarModal">
+              <svg viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="currentColor" stroke-width="1.6"/><path d="M10 6.5v7M6.5 10h7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              Voqea qo'shish
+            </button>
+          </div>
+          <div class="panel" id="calendarList"></div>
+          <div class="empty-state" id="calendarEmptyState">
+            <h3>Kalendar bo'sh</h3>
+            <p>NFP, FOMC, CPI kabi o'zingiz uchun muhim sanalarni qo'shing — yaqinlashganda shu yerda ko'rinadi.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SETTINGS -->
+      <section class="page" id="page-settings">
+        <div class="panel settings-panel">
+          <div class="field">
+            <label>Ism</label>
+            <input type="text" id="profileNameInput" placeholder="Ismingiz">
+          </div>
+          <div style="display:flex; align-items:center; gap:14px;">
+            <button class="btn-secondary" id="saveProfileBtn">Saqlash</button>
+            <span class="save-msg" id="saveMsg">Saqlandi ✓</span>
+          </div>
+          <div style="height:1px; background:var(--c-line); margin:6px 0;"></div>
+          <div class="field">
+            <label>Hisob</label>
+            <p style="font-size:13px; color:var(--c-text-dim); font-family:var(--f-mono);" id="accountEmailText">—</p>
+          </div>
+          <button class="btn-secondary" id="logoutBtn" style="align-self:flex-start;">Chiqish</button>
+          <div style="height:1px; background:var(--c-line); margin:6px 0;"></div>
+          <div>
+            <label style="display:block; font-size:12.5px; color:var(--c-text-dim); margin-bottom:10px;">Xavfli zona</label>
+            <button class="btn-danger-outline" id="clearLibraryBtn">Kutubxonani butunlay tozalash</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<!-- ADD ITEM MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Yangi material qo'shish</h2>
+      <button id="closeModal"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+    </div>
+    <form id="addForm">
+      <div class="modal-field">
+        <label>Nomi</label>
+        <input type="text" id="inputTitle" required placeholder="Masalan: CRT TBS Indikatori v3">
+      </div>
+      <div class="modal-field">
+        <label>Turi</label>
+        <select id="inputType">
+          <option value="strategiya">Strategiya / Pine Script</option>
+          <option value="kitob">Kitob / maqola</option>
+          <option value="makro">Makro konspekt</option>
+          <option value="boshqa">Boshqa</option>
+        </select>
+      </div>
+      <div class="modal-field">
+        <label>Qisqa tavsif</label>
+        <textarea id="inputDesc" rows="3" placeholder="Bu material haqida qisqacha..."></textarea>
+      </div>
+      <div class="modal-field">
+        <label>Havola (ixtiyoriy)</label>
+        <input type="url" id="inputLink" placeholder="https://...">
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="cancelAdd">Bekor qilish</button>
+        <button type="submit" class="btn-primary" style="padding:9px 18px;">Saqlash</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD TRADE MODAL -->
+<div class="modal-overlay" id="tradeModalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Yangi treyd qo'shish</h2>
+      <button id="closeTradeModal"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+    </div>
+    <form id="tradeForm">
+      <div class="modal-field"><label>Sana</label><input type="date" id="tradeDate" required></div>
+      <div class="modal-field"><label>Instrument</label><input type="text" id="tradeInstrument" required placeholder="Masalan: EURUSD, BTCUSDT"></div>
+      <div class="modal-field"><label>Yo'nalish</label>
+        <select id="tradeDirection"><option value="long">Long</option><option value="short">Short</option></select>
+      </div>
+      <div class="modal-field"><label>Kirish narxi (ixtiyoriy)</label><input type="number" step="any" id="tradeEntry"></div>
+      <div class="modal-field"><label>Chiqish narxi (ixtiyoriy)</label><input type="number" step="any" id="tradeExit"></div>
+      <div class="modal-field"><label>Natija ($)</label><input type="number" step="any" id="tradePnl" required placeholder="Masalan: 45 yoki -20"></div>
+      <div class="modal-field"><label>Strategiya / teg (ixtiyoriy)</label><input type="text" id="tradeStrategy" placeholder="Masalan: CRT TBS"></div>
+      <div class="modal-field"><label>Izoh / tahlil (ixtiyoriy)</label><textarea id="tradeNotes" rows="3" placeholder="Treyd qanday o'tdi, nima o'rganildi..."></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="cancelTrade">Bekor qilish</button>
+        <button type="submit" class="btn-primary" style="padding:9px 18px;">Saqlash</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ADD CALENDAR EVENT MODAL -->
+<div class="modal-overlay" id="calendarModalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>Iqtisodiy voqea qo'shish</h2>
+      <button id="closeCalendarModal"><svg viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>
+    </div>
+    <form id="calendarForm">
+      <div class="modal-field"><label>Sana</label><input type="date" id="calDate" required></div>
+      <div class="modal-field"><label>Voqea nomi</label><input type="text" id="calTitle" required placeholder="Masalan: FOMC stavka qarori"></div>
+      <div class="modal-field"><label>Ahamiyati</label>
+        <select id="calImportance"><option value="yuqori">Yuqori</option><option value="orta">O'rta</option><option value="past">Past</option></select>
+      </div>
+      <div class="modal-field"><label>Izoh (ixtiyoriy)</label><textarea id="calNote" rows="2" placeholder="Nimaga e'tibor berish kerak..."></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn-secondary" id="cancelCalendar">Bekor qilish</button>
+        <button type="submit" class="btn-primary" style="padding:9px 18px;">Saqlash</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+function startApp(){
+  const hasStorage = typeof window.storage !== 'undefined';
+
+  const seedItems = [
+    { id:'seed1', type:'strategiya', title:"CRT TBS Indikatori (Pine Script v5)", desc:"1H HTF va 1M LTF asosida Turtle Body Soup naqshlarini (Classic, Multi-candle, Engulfing) aniqlovchi dual-timeframe indikator.", link:"", date:Date.now()-86400000*2 },
+    { id:'seed2', type:'makro', title:"IS-LM tahlili — qisqa konspekt", desc:"IS va LM egri chiziqlari, muvozanat foiz stavkasi va daromad darajasi bo'yicha asosiy formulalar.", link:"", date:Date.now()-86400000*5 },
+    { id:'seed3', type:'kitob', title:"Makroiqtisodiyot — nazariy savollar banki", desc:"Solow modeli, Mundell-Fleming va Phillips egri chizig'i bo'yicha masalalar to'plami.", link:"", date:Date.now()-86400000*9 }
+  ];
+
+  let libraryItems = [];
+  let activeFilter = 'hammasi';
+  let searchQuery = '';
+
+  async function loadLibrary(){
+    if(!hasStorage){ return seedItems.slice(); }
+    try{
+      const res = await window.storage.get('library_items', false);
+      if(res && res.value){ return JSON.parse(res.value); }
+      await window.storage.set('library_items', JSON.stringify(seedItems), false);
+      return seedItems.slice();
+    }catch(e){
+      try{
+        await window.storage.set('library_items', JSON.stringify(seedItems), false);
+      }catch(e2){}
+      return seedItems.slice();
+    }
+  }
+
+  async function saveLibrary(items){
+    if(!hasStorage) return;
+    try{ await window.storage.set('library_items', JSON.stringify(items), false); }
+    catch(e){ console.error('Saqlashda xatolik:', e); }
+  }
+
+  async function loadProfileName(){
+    if(!hasStorage) return 'Zavqiddin';
+    try{
+      const res = await window.storage.get('profile_name', false);
+      return (res && res.value) ? res.value : 'Zavqiddin';
+    }catch(e){ return 'Zavqiddin'; }
+  }
+
+  async function saveProfileName(name){
+    if(!hasStorage) return;
+    try{ await window.storage.set('profile_name', name, false); }
+    catch(e){ console.error(e); }
+  }
+
+  function formatDate(ts){
+    const d = new Date(ts);
+    return d.toLocaleDateString('uz-UZ', { day:'2-digit', month:'short', year:'numeric' });
+  }
+
+  function tagLabel(type){
+    return { strategiya:'Strategiya', kitob:'Kitob', makro:'Makro', boshqa:'Boshqa' }[type] || 'Boshqa';
+  }
+
+  function renderStats(){
+    document.getElementById('statTotal').textContent = libraryItems.length;
+    document.getElementById('statStrategiya').textContent = libraryItems.filter(i=>i.type==='strategiya').length;
+    document.getElementById('statKitob').textContent = libraryItems.filter(i=>i.type==='kitob').length;
+    document.getElementById('statMakro').textContent = libraryItems.filter(i=>i.type==='makro').length;
+  }
+
+  function renderRecent(){
+    const sorted = libraryItems.slice().sort((a,b)=>b.date-a.date).slice(0,5);
+    const el = document.getElementById('recentList');
+    if(sorted.length===0){ el.innerHTML = '<div class="recent-empty">Hali hech narsa qo\'shilmagan.</div>'; return; }
+    el.innerHTML = sorted.map(item => `
+      <div class="recent-item">
+        <span class="tag ${item.type}">${tagLabel(item.type)}</span>
+        <div>
+          <div class="ri-title">${escapeHtml(item.title)}</div>
+          <div class="ri-date">${formatDate(item.date)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function escapeHtml(str){
+    const d = document.createElement('div'); d.textContent = str || ''; return d.innerHTML;
+  }
+
+  function renderLibrary(){
+    const grid = document.getElementById('libraryGrid');
+    const empty = document.getElementById('emptyState');
+    let filtered = libraryItems.filter(i => activeFilter==='hammasi' || i.type===activeFilter);
+    if(searchQuery.trim()){
+      const q = searchQuery.toLowerCase();
+      filtered = filtered.filter(i => (i.title+i.desc).toLowerCase().includes(q));
+    }
+    filtered.sort((a,b)=>b.date-a.date);
+
+    if(filtered.length===0){
+      grid.innerHTML = '';
+      empty.classList.add('show');
+    } else {
+      empty.classList.remove('show');
+      grid.innerHTML = filtered.map(item => `
+        <div class="lib-card">
+          <div class="lib-card-head">
+            <span class="tag ${item.type}">${tagLabel(item.type)}</span>
+            <div class="lib-card-actions">
+              ${item.link ? `<a class="icon-btn link" href="${escapeHtml(item.link)}" target="_blank" rel="noopener"><svg viewBox="0 0 20 20" fill="none"><path d="M8 5H5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-3M12 4h4v4M16 4l-7 7" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></a>` : ''}
+              <button class="icon-btn danger" data-del="${item.id}"><svg viewBox="0 0 20 20" fill="none"><path d="M4 6h12M8 6V4.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V6M6 6l.6 9.4a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9L14 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+            </div>
+          </div>
+          <h3>${escapeHtml(item.title)}</h3>
+          <p>${escapeHtml(item.desc)}</p>
+          <div class="lib-card-foot"><span class="lib-card-date">${formatDate(item.date)}</span></div>
+        </div>
+      `).join('');
+    }
+
+    grid.querySelectorAll('[data-del]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        libraryItems = libraryItems.filter(i=>i.id!==btn.dataset.del);
+        await saveLibrary(libraryItems);
+        renderAll();
+      });
+    });
+  }
+
+  function renderAll(){ renderStats(); renderRecent(); renderLibrary(); }
+
+  // ---- Navigation ----
+  document.querySelectorAll('.rail-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.rail-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+      document.getElementById('page-'+btn.dataset.page).classList.add('active');
+    });
+  });
+
+  // ---- Library filters / search ----
+  document.querySelectorAll('.chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      activeFilter = chip.dataset.filter;
+      renderLibrary();
+    });
+  });
+  document.getElementById('searchInput').addEventListener('input', (e)=>{
+    searchQuery = e.target.value;
+    renderLibrary();
+  });
+
+  // ---- Modal ----
+  const overlay = document.getElementById('modalOverlay');
+  function openModal(){ overlay.classList.add('show'); }
+  function closeModalFn(){ overlay.classList.remove('show'); document.getElementById('addForm').reset(); }
+  document.getElementById('openAddModal').addEventListener('click', openModal);
+  document.getElementById('closeModal').addEventListener('click', closeModalFn);
+  document.getElementById('cancelAdd').addEventListener('click', closeModalFn);
+  overlay.addEventListener('click', (e)=>{ if(e.target===overlay) closeModalFn(); });
+
+  document.getElementById('addForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const newItem = {
+      id: 'item_' + Date.now(),
+      title: document.getElementById('inputTitle').value.trim(),
+      type: document.getElementById('inputType').value,
+      desc: document.getElementById('inputDesc').value.trim(),
+      link: document.getElementById('inputLink').value.trim(),
+      date: Date.now()
+    };
+    if(!newItem.title) return;
+    libraryItems.push(newItem);
+    await saveLibrary(libraryItems);
+    renderAll();
+    closeModalFn();
+  });
+
+  // ---- Settings ----
+  document.getElementById('saveProfileBtn').addEventListener('click', async ()=>{
+    const name = document.getElementById('profileNameInput').value.trim() || 'Zavqiddin';
+    await saveProfileName(name);
+    document.getElementById('greetText').textContent = 'Xush kelibsiz, ' + name;
+    const msg = document.getElementById('saveMsg');
+    msg.classList.add('show');
+    setTimeout(()=>msg.classList.remove('show'), 1800);
+  });
+
+  document.getElementById('clearLibraryBtn').addEventListener('click', async ()=>{
+    if(!confirm("Kutubxonadagi barcha materiallar o'chiriladi. Davom etilsinmi?")) return;
+    libraryItems = [];
+    await saveLibrary(libraryItems);
+    renderAll();
+  });
+
+  // ---- Macro corner content ----
+  const macroTopics = [
+    { title:"IS-LM tahlili", short:"Tovar va pul bozorlari muvozanati orqali foiz stavkasi va ishlab chiqarish darajasini bog'laydi.", full:"IS egri chizig'i tovar bozoridagi muvozanatni (investitsiya = jamg'arma) ifodalaydi va pasayuvchi tendensiyaga ega, LM esa pul bozoridagi muvozanatni (pulga talab = taklif) ko'rsatadi va o'suvchi tendensiyaga ega. Ikkisining kesishgan nuqtasi qisqa muddatli muvozanatli foiz stavkasi va daromadni beradi." },
+    { title:"Solow o'sish modeli", short:"Kapital, mehnat va texnologiya orqali uzoq muddatli iqtisodiy o'sishni tushuntiradi.", full:"Model jamg'arma darajasi, aholi o'sishi va texnologik taraqqiyot kapital jamlanishi va ishchi kuchiga nisbatan ishlab chiqarishni qanday belgilashini ko'rsatadi. Diminishing returns tufayli iqtisodiyot 'steady state' holatiga intiladi, uzoq muddatli o'sish esa asosan texnologik taraqqiyot hisobiga bo'ladi." },
+    { title:"Mundell-Fleming modeli", short:"Ochiq iqtisodiyotda fiskal va monetar siyosat samaradorligini valyuta rejimiga bog'lab tahlil qiladi.", full:"IS-LM modelining ochiq iqtisodiyot uchun kengaytmasi bo'lib, kapital harakatchanligi yuqori bo'lganda erkin suzuvchi valyuta kursida monetar siyosat kuchli, fiskal siyosat esa kuchsiz ta'sir ko'rsatadi; qattiq belgilangan kursda esa bu nisbat teskari bo'ladi." },
+    { title:"AD-AS modeli", short:"Yalpi talab va yalpi taklif orqali narxlar darajasi va umumiy ishlab chiqarishni tushuntiradi.", full:"Yalpi talab (AD) egri chizig'i narx darajasi pasayganda umumiy xarajatlar oshishini, yalpi taklif (AS) esa qisqa va uzoq muddatda firmalarning ishlab chiqarish qarorlarini ifodalaydi. Ikkisining kesishuvi makroiqtisodiy muvozanat narxi va daromadini belgilaydi." },
+    { title:"Phillips egri chizig'i", short:"Ishsizlik darajasi va inflyatsiya o'rtasidagi qisqa muddatli teskari bog'liqlikni ko'rsatadi.", full:"Qisqa muddatda ishsizlik pasayganda inflyatsiya odatda oshadi va aksincha. Ammo kutilayotgan inflyatsiya o'zgarganda egri chiziq siljiydi, shu sababli uzoq muddatda bu bog'liqlik kuchsizlanadi (vertikal uzoq muddatli Phillips egri chizig'i kontseptsiyasi)." },
+    { title:"Multiplikator effekti", short:"Xarajatlardagi boshlang'ich o'zgarish umumiy daromadga ko'paytirilgan ta'sir ko'rsatishini izohlaydi.", full:"Marjinal iste'mol moyilligi (MPC) qanchalik yuqori bo'lsa, multiplikator shunchalik katta bo'ladi (1/(1-MPC) formulasi orqali hisoblanadi). Bu davlat xarajatlari, investitsiya yoki eksportdagi boshlang'ich o'zgarish nega umumiy daromadga undan kattaroq ta'sir qilishini tushuntiradi." }
+  ];
+
+  // ===================== TRADES / CHECKLIST / GOALS / CALENDAR =====================
+  let trades = [];
+  let checklist = [];
+  let goals = { trades:0, winRate:0, pnl:0 };
+  let calendarEvents = [];
+  let tradeSearchQuery = '';
+
+  const defaultChecklist = [
+    "Stop-loss oldindan belgilangan",
+    "Risk hajmi kunlik limitdan oshmaydi",
+    "Treyd reja/strategiyaga mos keladi",
+    "Hozir emotsional holatda emasman",
+    "Kirishdan oldin R:R nisbati hisoblangan",
+    "Natija jurnalga yoziladi"
+  ].map((t,i)=>({ id:'rule_seed_'+i, text:t, checked:false }));
+
+  async function loadTrades(){
+    if(!hasStorage) return [];
+    try{
+      const res = await window.storage.get('trades_v1', false);
+      return res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){ return []; }
+  }
+  async function saveTrades(list){
+    if(!hasStorage) return;
+    try{ await window.storage.set('trades_v1', JSON.stringify(list), false); }catch(e){ console.error(e); }
+  }
+
+  async function loadChecklist(){
+    if(!hasStorage) return defaultChecklist.slice();
+    try{
+      const res = await window.storage.get('checklist_v1', false);
+      if(res && res.value) return JSON.parse(res.value);
+      await window.storage.set('checklist_v1', JSON.stringify(defaultChecklist), false);
+      return defaultChecklist.slice();
+    }catch(e){ return defaultChecklist.slice(); }
+  }
+  async function saveChecklist(list){
+    if(!hasStorage) return;
+    try{ await window.storage.set('checklist_v1', JSON.stringify(list), false); }catch(e){ console.error(e); }
+  }
+
+  async function loadGoals(){
+    if(!hasStorage) return { trades:0, winRate:0, pnl:0 };
+    try{
+      const res = await window.storage.get('goals_v1', false);
+      return res && res.value ? JSON.parse(res.value) : { trades:0, winRate:0, pnl:0 };
+    }catch(e){ return { trades:0, winRate:0, pnl:0 }; }
+  }
+  async function saveGoals(g){
+    if(!hasStorage) return;
+    try{ await window.storage.set('goals_v1', JSON.stringify(g), false); }catch(e){ console.error(e); }
+  }
+
+  async function loadCalendar(){
+    if(!hasStorage) return [];
+    try{
+      const res = await window.storage.get('calendar_v1', false);
+      return res && res.value ? JSON.parse(res.value) : [];
+    }catch(e){ return []; }
+  }
+  async function saveCalendar(list){
+    if(!hasStorage) return;
+    try{ await window.storage.set('calendar_v1', JSON.stringify(list), false); }catch(e){ console.error(e); }
+  }
+
+  function isSameDay(ts, ref){
+    const d = new Date(ts);
+    return d.getFullYear()===ref.getFullYear() && d.getMonth()===ref.getMonth() && d.getDate()===ref.getDate();
+  }
+  function isSameMonth(ts, ref){
+    const d = new Date(ts);
+    return d.getFullYear()===ref.getFullYear() && d.getMonth()===ref.getMonth();
+  }
+  function fmtMoney(n){
+    const v = Number(n)||0;
+    return (v>=0?'$':'-$') + Math.abs(v).toLocaleString('en-US', { maximumFractionDigits:2 });
+  }
+
+  function computeTradeStats(list){
+    const total = list.length;
+    const wins = list.filter(t=>Number(t.pnl)>0);
+    const losses = list.filter(t=>Number(t.pnl)<0);
+    const winRate = total ? (wins.length/total*100) : 0;
+    const totalPnl = list.reduce((s,t)=>s+Number(t.pnl),0);
+    const grossWin = wins.reduce((s,t)=>s+Number(t.pnl),0);
+    const grossLoss = Math.abs(losses.reduce((s,t)=>s+Number(t.pnl),0));
+    const profitFactor = grossLoss>0 ? (grossWin/grossLoss) : (grossWin>0 ? grossWin : 0);
+    return { total, winRate, totalPnl, profitFactor };
+  }
+
+  function buildEquitySvg(list){
+    const sorted = list.slice().sort((a,b)=>a.date-b.date);
+    if(sorted.length < 2) return '<div class="equity-empty">Egri chiziq uchun kamida 2 ta treyd kerak.</div>';
+    let cum = 0;
+    const pts = sorted.map(t=>{ cum += Number(t.pnl); return cum; });
+    const w=600, h=200, pad=20;
+    const min = Math.min(0,...pts), max = Math.max(0,...pts);
+    const range = (max-min) || 1;
+    const stepX = (w-2*pad)/(pts.length-1);
+    const coords = pts.map((v,i)=>{
+      const x = pad + i*stepX;
+      const y = h-pad - ((v-min)/range)*(h-2*pad);
+      return [x.toFixed(1), y.toFixed(1)];
+    });
+    const zeroY = (h-pad - ((0-min)/range)*(h-2*pad)).toFixed(1);
+    const linePoints = coords.map(c=>c.join(',')).join(' ');
+    const areaPoints = `${pad},${h-pad} ` + linePoints + ` ${w-pad},${h-pad}`;
+    return `<svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">
+      <line x1="${pad}" y1="${zeroY}" x2="${w-pad}" y2="${zeroY}" stroke="rgba(124,138,156,0.4)" stroke-dasharray="4 4" stroke-width="1"/>
+      <polygon points="${areaPoints}" fill="rgba(46,215,135,0.12)"/>
+      <polyline points="${linePoints}" fill="none" stroke="#2ED787" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+    </svg>`;
+  }
+
+  function renderTradeTable(){
+    const tbody = document.getElementById('tradeTableBody');
+    const wrap = document.querySelector('.trade-table-wrap');
+    const empty = document.getElementById('tradeEmptyState');
+    let list = trades.slice();
+    if(tradeSearchQuery.trim()){
+      const q = tradeSearchQuery.toLowerCase();
+      list = list.filter(t => (t.instrument||'').toLowerCase().includes(q));
+    }
+    list.sort((a,b)=>b.date-a.date);
+
+    if(list.length===0){
+      wrap.style.display='none'; empty.classList.add('show');
+    }else{
+      wrap.style.display='block'; empty.classList.remove('show');
+      tbody.innerHTML = list.map(t=>{
+        const pnlNum = Number(t.pnl);
+        return `<tr>
+          <td>${formatDate(t.date)}</td>
+          <td>${escapeHtml(t.instrument)}</td>
+          <td><span class="dir-badge ${t.direction}">${t.direction==='long'?'Long':'Short'}</span></td>
+          <td>${t.entry!==''&&t.entry!=null ? t.entry : '—'}</td>
+          <td>${t.exit!==''&&t.exit!=null ? t.exit : '—'}</td>
+          <td class="${pnlNum>=0?'pnl-pos':'pnl-neg'}">${fmtMoney(pnlNum)}</td>
+          <td>${t.strategy ? escapeHtml(t.strategy) : '—'}</td>
+          <td class="notes-cell">${t.notes ? escapeHtml(t.notes) : '—'}</td>
+          <td><button class="icon-btn danger" data-deltrade="${t.id}"><svg viewBox="0 0 20 20" fill="none"><path d="M4 6h12M8 6V4.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V6M6 6l.6 9.4a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9L14 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button></td>
+        </tr>`;
+      }).join('');
+      tbody.querySelectorAll('[data-deltrade]').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          trades = trades.filter(t=>t.id!==btn.dataset.deltrade);
+          await saveTrades(trades);
+          renderTrades();
+        });
+      });
+    }
+  }
+
+  function renderTradeStats(){
+    const s = computeTradeStats(trades);
+    document.getElementById('tsTotal').textContent = s.total;
+    document.getElementById('tsWinrate').textContent = s.winRate.toFixed(1)+'%';
+    const pnlEl = document.getElementById('tsPnl');
+    pnlEl.textContent = fmtMoney(s.totalPnl);
+    pnlEl.style.color = s.totalPnl>=0 ? 'var(--c-green)' : 'var(--c-red)';
+    document.getElementById('tsPf').textContent = isFinite(s.profitFactor) ? s.profitFactor.toFixed(2) : '∞';
+  }
+
+  function renderEquityCurve(){
+    document.getElementById('equityCurveWrap').innerHTML = buildEquitySvg(trades);
+  }
+
+  function renderDashboardTradeStats(){
+    const now = new Date();
+    const todayTrades = trades.filter(t=>isSameDay(t.date, now));
+    const monthTrades = trades.filter(t=>isSameMonth(t.date, now));
+    const todayPnl = todayTrades.reduce((s,t)=>s+Number(t.pnl),0);
+    const monthPnl = monthTrades.reduce((s,t)=>s+Number(t.pnl),0);
+    const monthWins = monthTrades.filter(t=>Number(t.pnl)>0).length;
+    const monthWinrate = monthTrades.length ? (monthWins/monthTrades.length*100) : 0;
+
+    const todayEl = document.getElementById('statTodayPnl');
+    const monthEl = document.getElementById('statMonthPnl');
+    todayEl.textContent = fmtMoney(todayPnl);
+    todayEl.style.color = todayPnl>=0 ? 'var(--c-green)' : 'var(--c-red)';
+    monthEl.textContent = fmtMoney(monthPnl);
+    monthEl.style.color = monthPnl>=0 ? 'var(--c-green)' : 'var(--c-red)';
+    document.getElementById('statMonthWinrate').textContent = monthWinrate.toFixed(0)+'%';
+    document.getElementById('statTradeCount').textContent = trades.length;
+  }
+
+  function renderTrades(){
+    renderTradeTable();
+    renderTradeStats();
+    renderEquityCurve();
+    renderDashboardTradeStats();
+    renderGoalsProgress();
+  }
+
+  // ---- Checklist ----
+  function renderChecklist(){
+    const el = document.getElementById('checklistList');
+    if(checklist.length===0){
+      el.innerHTML = '<div class="recent-empty">Qoidalar yo\'q — birinchisini qo\'shing.</div>';
+      return;
+    }
+    el.innerHTML = checklist.map(item=>`
+      <div class="checklist-item ${item.checked?'checked':''}">
+        <input type="checkbox" data-ruleid="${item.id}" ${item.checked?'checked':''}>
+        <span>${escapeHtml(item.text)}</span>
+        <button class="icon-btn danger" data-delrule="${item.id}"><svg viewBox="0 0 20 20" fill="none"><path d="M4 6h12M8 6V4.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V6M6 6l.6 9.4a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9L14 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div>
+    `).join('');
+    el.querySelectorAll('[data-ruleid]').forEach(cb=>{
+      cb.addEventListener('change', async ()=>{
+        const item = checklist.find(i=>i.id===cb.dataset.ruleid);
+        if(item){ item.checked = cb.checked; await saveChecklist(checklist); renderChecklist(); }
+      });
+    });
+    el.querySelectorAll('[data-delrule]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        checklist = checklist.filter(i=>i.id!==btn.dataset.delrule);
+        await saveChecklist(checklist);
+        renderChecklist();
+      });
+    });
+  }
+
+  // ---- Goals ----
+  function fillGoalInputs(){
+    document.getElementById('goalTrades').value = goals.trades || 0;
+    document.getElementById('goalWinrate').value = goals.winRate || 0;
+    document.getElementById('goalPnl').value = goals.pnl || 0;
+  }
+
+  function renderGoalsProgress(){
+    const now = new Date();
+    const monthTrades = trades.filter(t=>isSameMonth(t.date, now));
+    const actualTrades = monthTrades.length;
+    const actualWins = monthTrades.filter(t=>Number(t.pnl)>0).length;
+    const actualWinrate = monthTrades.length ? (actualWins/monthTrades.length*100) : 0;
+    const actualPnl = monthTrades.reduce((s,t)=>s+Number(t.pnl),0);
+
+    function row(name, actual, target, fmt){
+      const hasTarget = Number(target) > 0;
+      const pct = hasTarget ? Math.min(actual/target*100, 100) : 0;
+      const cls = !hasTarget ? 'empty' : (pct>=100 ? '' : 'warn');
+      return `<div class="goal-row">
+        <div class="goal-row-head"><span class="name">${name}</span><span class="val">${fmt(actual)} / ${hasTarget?fmt(target):'belgilanmagan'}</span></div>
+        <div class="goal-bar-track"><div class="goal-bar-fill ${cls}" style="width:${hasTarget?pct:100}%;"></div></div>
+      </div>`;
+    }
+
+    document.getElementById('goalsProgress').innerHTML =
+      row('Treydlar soni', actualTrades, goals.trades, v=>Math.round(v)) +
+      row('Win-rate', actualWinrate, goals.winRate, v=>v.toFixed(0)+'%') +
+      row('P&L', actualPnl, goals.pnl, v=>fmtMoney(v));
+  }
+
+  // ---- Calendar ----
+  function renderCalendar(){
+    const wrap = document.getElementById('calendarList');
+    const empty = document.getElementById('calendarEmptyState');
+    if(calendarEvents.length===0){
+      wrap.innerHTML=''; wrap.style.display='none'; empty.classList.add('show'); return;
+    }
+    wrap.style.display='block';
+    empty.classList.remove('show');
+    const now = new Date(); now.setHours(0,0,0,0);
+    const sorted = calendarEvents.slice().sort((a,b)=>a.date-b.date);
+    wrap.innerHTML = sorted.map(ev=>{
+      const isPast = ev.date < now.getTime();
+      return `<div class="cal-row ${isPast?'is-past':''}">
+        <div class="cal-date">${formatDate(ev.date)}</div>
+        <div class="cal-imp-dot ${isPast?'past':ev.importance}"></div>
+        <div class="cal-body">
+          <h4>${escapeHtml(ev.title)}</h4>
+          ${ev.note ? `<p>${escapeHtml(ev.note)}</p>` : ''}
+        </div>
+        <div class="cal-actions"><button class="icon-btn danger" data-delcal="${ev.id}"><svg viewBox="0 0 20 20" fill="none"><path d="M4 6h12M8 6V4.5a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1V6M6 6l.6 9.4a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9L14 6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+      </div>`;
+    }).join('');
+    wrap.querySelectorAll('[data-delcal]').forEach(btn=>{
+      btn.addEventListener('click', async ()=>{
+        calendarEvents = calendarEvents.filter(e=>e.id!==btn.dataset.delcal);
+        await saveCalendar(calendarEvents);
+        renderCalendar();
+      });
+    });
+  }
+
+  // ---- Subtab switching (Treydlar + Makro) ----
+  document.querySelectorAll('.subtabs').forEach(group=>{
+    const g = group.dataset.group;
+    group.querySelectorAll('.chip').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        group.querySelectorAll('.chip').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll(`.subpage[data-group="${g}"]`).forEach(p=>p.style.display='none');
+        const target = document.querySelector(`.subpage[data-group="${g}"][data-name="${btn.dataset.sub}"]`);
+        if(target) target.style.display='block';
+      });
+    });
+  });
+
+  // ---- Trade search ----
+  document.getElementById('tradeSearchInput').addEventListener('input', (e)=>{
+    tradeSearchQuery = e.target.value;
+    renderTradeTable();
+  });
+
+  // ---- Trade modal ----
+  const tradeOverlay = document.getElementById('tradeModalOverlay');
+  function openTradeModal(){
+    document.getElementById('tradeDate').value = new Date().toISOString().slice(0,10);
+    tradeOverlay.classList.add('show');
+  }
+  function closeTradeModal(){ tradeOverlay.classList.remove('show'); document.getElementById('tradeForm').reset(); }
+  document.getElementById('openTradeModal').addEventListener('click', openTradeModal);
+  document.getElementById('closeTradeModal').addEventListener('click', closeTradeModal);
+  document.getElementById('cancelTrade').addEventListener('click', closeTradeModal);
+  tradeOverlay.addEventListener('click', (e)=>{ if(e.target===tradeOverlay) closeTradeModal(); });
+
+  document.getElementById('tradeForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const dateVal = document.getElementById('tradeDate').value;
+    const newTrade = {
+      id: 'trade_'+Date.now(),
+      date: dateVal ? new Date(dateVal).getTime() : Date.now(),
+      instrument: document.getElementById('tradeInstrument').value.trim(),
+      direction: document.getElementById('tradeDirection').value,
+      entry: document.getElementById('tradeEntry').value,
+      exit: document.getElementById('tradeExit').value,
+      pnl: document.getElementById('tradePnl').value,
+      strategy: document.getElementById('tradeStrategy').value.trim(),
+      notes: document.getElementById('tradeNotes').value.trim()
+    };
+    if(!newTrade.instrument || newTrade.pnl===''){ return; }
+    trades.push(newTrade);
+    await saveTrades(trades);
+    renderTrades();
+    closeTradeModal();
+  });
+
+  // ---- Checklist actions ----
+  document.getElementById('addRuleBtn').addEventListener('click', async ()=>{
+    const input = document.getElementById('newRuleInput');
+    const text = input.value.trim();
+    if(!text) return;
+    checklist.push({ id:'rule_'+Date.now(), text, checked:false });
+    await saveChecklist(checklist);
+    renderChecklist();
+    input.value='';
+  });
+  document.getElementById('newRuleInput').addEventListener('keydown', (e)=>{
+    if(e.key==='Enter'){ e.preventDefault(); document.getElementById('addRuleBtn').click(); }
+  });
+  document.getElementById('resetChecklistBtn').addEventListener('click', async ()=>{
+    checklist.forEach(i=>i.checked=false);
+    await saveChecklist(checklist);
+    renderChecklist();
+  });
+
+  // ---- Goals actions ----
+  document.getElementById('saveGoalsBtn').addEventListener('click', async ()=>{
+    goals = {
+      trades: Number(document.getElementById('goalTrades').value)||0,
+      winRate: Number(document.getElementById('goalWinrate').value)||0,
+      pnl: Number(document.getElementById('goalPnl').value)||0
+    };
+    await saveGoals(goals);
+    renderGoalsProgress();
+    const msg = document.getElementById('goalSaveMsg');
+    msg.classList.add('show');
+    setTimeout(()=>msg.classList.remove('show'), 1800);
+  });
+
+  // ---- Calendar modal ----
+  const calOverlay = document.getElementById('calendarModalOverlay');
+  function openCalendarModal(){
+    document.getElementById('calDate').value = new Date().toISOString().slice(0,10);
+    calOverlay.classList.add('show');
+  }
+  function closeCalendarModal(){ calOverlay.classList.remove('show'); document.getElementById('calendarForm').reset(); }
+  document.getElementById('openCalendarModal').addEventListener('click', openCalendarModal);
+  document.getElementById('closeCalendarModal').addEventListener('click', closeCalendarModal);
+  document.getElementById('cancelCalendar').addEventListener('click', closeCalendarModal);
+  calOverlay.addEventListener('click', (e)=>{ if(e.target===calOverlay) closeCalendarModal(); });
+
+  document.getElementById('calendarForm').addEventListener('submit', async (e)=>{
+    e.preventDefault();
+    const dateVal = document.getElementById('calDate').value;
+    const newEvent = {
+      id: 'cal_'+Date.now(),
+      date: dateVal ? new Date(dateVal).getTime() : Date.now(),
+      title: document.getElementById('calTitle').value.trim(),
+      importance: document.getElementById('calImportance').value,
+      note: document.getElementById('calNote').value.trim()
+    };
+    if(!newEvent.title) return;
+    calendarEvents.push(newEvent);
+    await saveCalendar(calendarEvents);
+    renderCalendar();
+    closeCalendarModal();
+  });
+
+  function renderMacro(){
+    const grid = document.getElementById('macroGrid');
+    grid.innerHTML = macroTopics.map((t,idx) => `
+      <div class="macro-card" data-idx="${idx}">
+        <div class="macro-card-head">
+          <h3>${t.title}</h3>
+          <span class="chev">▾</span>
+        </div>
+        <p class="short">${t.short}</p>
+        <p class="full">${t.full}</p>
+      </div>
+    `).join('');
+    grid.querySelectorAll('.macro-card').forEach(card=>{
+      card.addEventListener('click', ()=> card.classList.toggle('open'));
+    });
+  }
+
+  // ---- Clock ----
+  function updateClock(){
+    const now = new Date();
+    const time = now.toLocaleTimeString('uz-UZ', { hour:'2-digit', minute:'2-digit', second:'2-digit' });
+    document.getElementById('clockText').textContent = time + ' (Toshkent)';
+    document.getElementById('dateText').textContent = now.toLocaleDateString('uz-UZ', { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+  }
+  updateClock();
+  setInterval(updateClock, 1000);
+
+  // ---- Range readout ticker (purely decorative) ----
+  let base = 1.0871;
+  setInterval(()=>{
+    base += (Math.random()-0.5)*0.0009;
+    document.getElementById('rangeReadout').textContent = `RANGE: ${(base-0.004).toFixed(4)} – ${(base+0.004).toFixed(4)}`;
+  }, 1800);
+
+  // ---- Init ----
+  (async function init(){
+    libraryItems = await loadLibrary();
+    const name = await loadProfileName();
+    document.getElementById('greetText').textContent = 'Xush kelibsiz, ' + name;
+    document.getElementById('profileNameInput').value = name;
+    renderAll();
+    renderMacro();
+
+    trades = await loadTrades();
+    checklist = await loadChecklist();
+    goals = await loadGoals();
+    calendarEvents = await loadCalendar();
+    fillGoalInputs();
+    renderTrades();
+    renderChecklist();
+    renderCalendar();
+  })();
+}
+
+/* =====================================================================
+   FIREBASE — AUTENTIFIKATSIYA VA MA'LUMOTLARNI SAQLASH
+   1) Quyidagi firebaseConfig ichiga O'ZINGIZNING Firebase loyihangiz
+      sozlamalarini joylashtiring (Firebase Console > Project settings).
+   2) Firestore Database yoqilgan va Email/Password Authentication
+      yoqilgan bo'lishi kerak (qo'llanma matnida tushuntirilgan).
+===================================================================== */
+const firebaseConfig = {
+  apiKey: "BU_YERGA_API_KEY",
+  authDomain: "BU_YERGA_PROJECT.firebaseapp.com",
+  projectId: "BU_YERGA_PROJECT_ID",
+  storageBucket: "BU_YERGA_PROJECT.appspot.com",
+  messagingSenderId: "BU_YERGA_SENDER_ID",
+  appId: "BU_YERGA_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// window.storage ni Firestore bilan ishlaydigan qilib qayta yaratamiz —
+// shu orqali yuqoridagi butun ilova kodi o'zgarmagan holda ishlaydi.
+function installFirestoreShim(uid){
+  window.storage = {
+    async get(key, shared){
+      const ref = db.collection('users').doc(uid).collection('storage').doc(key);
+      const snap = await ref.get();
+      if(!snap.exists) throw new Error('not_found');
+      return { key, value: snap.data().value, shared: !!shared };
+    },
+    async set(key, value, shared){
+      const ref = db.collection('users').doc(uid).collection('storage').doc(key);
+      await ref.set({ value, updatedAt: Date.now() });
+      return { key, value, shared: !!shared };
+    },
+    async delete(key, shared){
+      const ref = db.collection('users').doc(uid).collection('storage').doc(key);
+      await ref.delete();
+      return { key, deleted:true, shared: !!shared };
+    },
+    async list(prefix, shared){
+      const snap = await db.collection('users').doc(uid).collection('storage').get();
+      const keys = snap.docs.map(d=>d.id).filter(k => !prefix || k.startsWith(prefix));
+      return { keys, prefix, shared: !!shared };
+    }
+  };
+}
+
+let appStarted = false;
+
+const loginOverlay = document.getElementById('loginOverlay');
+const loginCard = document.getElementById('loginCard');
+const loginForm = document.getElementById('loginForm');
+const loginError = document.getElementById('loginError');
+const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+const loginSwitchBtn = document.getElementById('loginSwitchBtn');
+const loginSwitchText = document.getElementById('loginSwitchText');
+const loginSubtext = document.getElementById('loginSubtext');
+
+let mode = 'login'; // 'login' | 'signup'
+
+function showLoginError(msg){
+  loginError.textContent = msg;
+  loginError.classList.add('show');
+}
+function clearLoginError(){
+  loginError.classList.remove('show');
+  loginError.textContent = '';
+}
+
+loginSwitchBtn.addEventListener('click', ()=>{
+  clearLoginError();
+  if(mode === 'login'){
+    mode = 'signup';
+    loginSubtext.textContent = "Yangi hisob yaratish uchun ma'lumotlarni kiriting";
+    loginSubmitBtn.textContent = "Ro'yxatdan o'tish";
+    loginSwitchText.textContent = "Hisobingiz bormi?";
+    loginSwitchBtn.textContent = "Kirish";
+  } else {
+    mode = 'login';
+    loginSubtext.textContent = "Davom etish uchun tizimga kiring";
+    loginSubmitBtn.textContent = "Kirish";
+    loginSwitchText.textContent = "Hisobingiz yo'qmi?";
+    loginSwitchBtn.textContent = "Ro'yxatdan o'tish";
+  }
+});
+
+loginForm.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  clearLoginError();
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  loginCard.classList.add('busy');
+  loginSubmitBtn.disabled = true;
+  try{
+    if(mode === 'signup'){
+      await auth.createUserWithEmailAndPassword(email, password);
+    } else {
+      await auth.signInWithEmailAndPassword(email, password);
+    }
+    // onAuthStateChanged handles the rest
+  }catch(err){
+    const messages = {
+      'auth/email-already-in-use': "Bu email allaqachon ro'yxatdan o'tgan — Kirish tugmasidan foydalaning.",
+      'auth/invalid-email': "Email formati noto'g'ri.",
+      'auth/weak-password': "Parol kamida 6 belgidan iborat bo'lishi kerak.",
+      'auth/wrong-password': "Parol noto'g'ri.",
+      'auth/user-not-found': "Bu email bilan hisob topilmadi — Ro'yxatdan o'ting.",
+      'auth/invalid-credential': "Email yoki parol noto'g'ri."
+    };
+    showLoginError(messages[err.code] || ("Xatolik: " + err.message));
+  }finally{
+    loginCard.classList.remove('busy');
+    loginSubmitBtn.disabled = false;
+  }
+});
+
+document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+  if(!confirm("Hisobdan chiqishni xohlaysizmi?")) return;
+  await auth.signOut();
+  location.reload();
+});
+
+auth.onAuthStateChanged((user)=>{
+  if(user){
+    installFirestoreShim(user.uid);
+    loginOverlay.style.display = 'none';
+    const emailEl = document.getElementById('accountEmailText');
+    if(emailEl) emailEl.textContent = user.email;
+    if(!appStarted){ appStarted = true; startApp(); }
+  } else {
+    loginOverlay.style.display = 'flex';
+  }
+});
+</script>
+</body>
+</html>
